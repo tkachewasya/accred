@@ -1,0 +1,2147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Аккредитация СПО: Сестринское дело — Полная база (414 вопросов + Экзамен 80/60)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        /* 3D эффект переворота карточки (Quizlet style) */
+        .perspective-1000 {
+            perspective: 1000px;
+        }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .backface-hidden {
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+        }
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+        .flipped {
+            transform: rotateY(180deg);
+        }
+        /* Скрытие полосы прокрутки для горизонтальных табов */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Эффект размытия ответа в режиме шпаргалки */
+        .blur-answer {
+            filter: blur(6px);
+            user-select: none;
+            transition: filter 0.25s ease;
+        }
+        .blur-answer:hover, .blur-answer.revealed {
+            filter: blur(0);
+            user-select: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Верхняя шапка с общей статистикой -->
+    <header class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-teal-900 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-xl font-bold shrink-0 border border-white/20">
+                        ✚
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight">Аккредитация СПО: Сестринское дело</h1>
+                        <p class="text-xs text-indigo-200">Единая проверенная база: 414 вопросов (7 блоков) • Квизлет • Тренировка • Экзамен 80/60</p>
+                    </div>
+                </div>
+
+                <!-- Счетчики прогресса -->
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
+                    <div class="bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg border border-white/15 flex items-center gap-1.5">
+                        <span class="text-indigo-200">Всего в базе:</span>
+                        <span id="stat-total" class="font-bold text-white">414</span>
+                    </div>
+                    <div class="bg-emerald-500/20 backdrop-blur px-3 py-1.5 rounded-lg border border-emerald-400/30 flex items-center gap-1.5">
+                        <span class="text-emerald-200">Изучено («Знаю»):</span>
+                        <span id="stat-known" class="font-bold text-emerald-300">0</span>
+                    </div>
+                    <div class="bg-amber-500/20 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-400/30 flex items-center gap-1.5">
+                        <span class="text-amber-200">Повторить:</span>
+                        <span id="stat-review" class="font-bold text-amber-300">0</span>
+                    </div>
+                    <button id="btn-reset-modal" class="bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 px-3 py-1.5 rounded-lg border border-rose-400/30 transition font-medium">
+                        Сбросить прогресс
+                    </button>
+                </div>
+            </div>
+
+            <!-- Прогресс-бар изучения -->
+            <div class="mt-3">
+                <div class="flex justify-between text-xs text-indigo-200 mb-1">
+                    <span id="progress-label">Прогресс освоения базы: 0%</span>
+                    <span id="filtered-count-label">Выбрано: 414 вопр.</span>
+                </div>
+                <div class="w-full h-2 bg-indigo-950/60 rounded-full overflow-hidden flex">
+                    <div id="bar-known" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="bar-review" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контейнер -->
+    <main class="max-w-7xl w-full mx-auto px-4 py-5 sm:px-6 flex-1 flex flex-col gap-5">
+
+        <!-- Панель управления: Режимы + Поиск + Фильтры -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-4">
+            <!-- Переключатель 4 режимов -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-xl">
+                <button data-mode="flashcards" class="mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
+                    <span>🗂️</span> Карточки (Квизлет)
+                </button>
+                <button data-mode="quiz" class="mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60">
+                    <span>📝</span> Тренировка (Тест)
+                </button>
+                <button data-mode="exam" class="mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60">
+                    <span>🏆</span> Экзамен (80 вопр. / 60 мин)
+                </button>
+                <button data-mode="list" class="mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60">
+                    <span>📋</span> База знаний (414)
+                </button>
+            </div>
+
+            <!-- Панель фильтров (скрывается во время активного экзамена) -->
+            <div id="global-filters-panel" class="flex flex-col gap-3">
+                <div class="flex flex-col md:flex-row gap-3">
+                    <div class="relative flex-1">
+                        <input id="search-input" type="text" placeholder="Поиск по номеру (1–414), вопросу или вариантам ответа..." 
+                            class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <span class="absolute left-3.5 top-2.5 text-slate-400">🔍</span>
+                        <button id="clear-search" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+                    </div>
+
+                    <!-- Фильтр по учебному статусу -->
+                    <div class="flex flex-wrap gap-1.5">
+                        <button data-status="all" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white transition ring-2 ring-indigo-600 ring-offset-1">
+                            Все вопросы (414)
+                        </button>
+                        <button data-status="unseen" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                            🆕 Неизученные
+                        </button>
+                        <button data-status="review" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-amber-100 text-amber-900 hover:bg-amber-200 transition">
+                            ⭐ Повторить
+                        </button>
+                        <button data-status="known" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 transition">
+                            ✅ Изученные
+                        </button>
+                        <button data-status="multi" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-purple-100 text-purple-900 hover:bg-purple-200 transition">
+                            🔢 Несколько ответов
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Фильтр по 7 логическим блокам -->
+                <div>
+                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Тематические блоки:</div>
+                    <div id="block-filters" class="flex flex-wrap gap-1.5">
+                        <!-- Генерируется через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Уведомление, если по фильтру ничего не найдено -->
+        <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center my-4">
+            <div class="text-4xl mb-3">🔎</div>
+            <h3 class="text-lg font-bold text-slate-800">По выбранному фильтру вопросов не найдено</h3>
+            <p class="text-sm text-slate-500 mt-1">Попробуйте сбросить строку поиска или переключить фильтр блока/статуса.</p>
+            <button id="btn-reset-filters" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">
+                Показать все 414 вопросов
+            </button>
+        </div>
+
+        <!-- ==================== РЕЖИМ: ЭКЗАМЕН СПО (80 ВОПРОСОВ / 60 МИНУТ) ==================== -->
+        <section id="view-exam" class="hidden flex-1 flex flex-col gap-4">
+            
+            <!-- Стартовый экран настройки экзамена -->
+            <div id="exam-start-screen" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col gap-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                    <div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold text-xs mb-2">
+                            🏛️ Стандарт первичной аккредитации СПО РФ
+                        </span>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Итоговое тестирование: 80 вопросов на 60 минут</h2>
+                        <p class="text-sm text-slate-600 mt-1">
+                            Случайная выборка 80 тестовых заданий из единой проверенной базы (414 вопросов) с точными дистракторами и поддержкой нескольких ответов.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shrink-0">
+                        <div class="text-center px-2">
+                            <div class="text-2xl font-extrabold text-indigo-600">80</div>
+                            <div class="text-[11px] font-semibold text-slate-500 uppercase">вопросов</div>
+                        </div>
+                        <div class="h-8 w-px bg-slate-200"></div>
+                        <div class="text-center px-2">
+                            <div class="text-2xl font-extrabold text-indigo-600">60:00</div>
+                            <div class="text-[11px] font-semibold text-slate-500 uppercase">минут</div>
+                        </div>
+                        <div class="h-8 w-px bg-slate-200"></div>
+                        <div class="text-center px-2">
+                            <div class="text-2xl font-extrabold text-emerald-600">70/80</div>
+                            <div class="text-[11px] font-semibold text-slate-500 uppercase">сдан (87.5%)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Настройки билета -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-600">1. Формирование экзаменационного билета (80 шт.):</label>
+                        <select id="exam-pool-select" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">Случайные 80 вопросов из всей базы (414 вопросов)</option>
+                            <option value="unlearned">Приоритет неизученным и «Повторить» (80 вопросов)</option>
+                        </select>
+                        <p class="text-xs text-slate-500">В каждый билет включаются задания с оригинальными вариантами ответов из всех 7 тематических блоков.</p>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-600">2. Режим проверки ответов:</label>
+                        <select id="exam-feedback-select" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="strict">Строгий экзамен (результат и разбор только после сдачи билета)</option>
+                            <option value="instant">Обучающий экзамен (показывать верный ответ сразу после клика)</option>
+                        </select>
+                        <p class="text-xs text-slate-500">В строгом режиме вы можете свободно переключаться между всеми 80 вопросами и менять ответы до завершения таймера.</p>
+                    </div>
+                </div>
+
+                <!-- Критерии оценки -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-3">
+                        <span class="text-xl">✅</span>
+                        <div><b>70 — 80 правильных ответов (≥ 87.5%):</b> результат <b>«СДАН»</b> (аккредитационный порог пройден).</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center gap-3">
+                        <span class="text-xl">❌</span>
+                        <div><b>69 и менее правильных ответов:</b> результат <b>«НЕ СДАН»</b> (все ошибки можно будет прорешать отдельно).</div>
+                    </div>
+                </div>
+
+                <div class="flex justify-center pt-2">
+                    <button id="btn-start-exam" class="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-2xl shadow-md hover:shadow-lg transition text-base flex items-center justify-center gap-2">
+                        <span>🚀</span> Начать экзамен (80 вопросов • 60 минут)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Активный экран прохождения экзамена -->
+            <div id="exam-active-screen" class="hidden flex-col gap-4">
+                <!-- Верхняя панель таймера и статуса экзамена -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <span id="exam-q-counter" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs sm:text-sm">
+                            Вопрос 1 из 80
+                        </span>
+                        <span id="exam-answered-counter" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm">
+                            Отвечено: 0 / 80
+                        </span>
+                    </div>
+
+                    <!-- Таймер 60:00 -->
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div id="exam-timer-box" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm sm:text-base">
+                            <span>⏱️</span>
+                            <span id="exam-timer-display">60:00</span>
+                        </div>
+                        <button id="btn-exam-pause" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+                            Пауза
+                        </button>
+                        <button id="btn-exam-finish" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition shadow-sm">
+                            Завершить тест
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Основная рабочая область: Вопрос слева + Навигационная сетка 1..80 справа -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                    <!-- Карточка текущего вопроса (8 колонок) -->
+                    <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col gap-5">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span id="exam-q-bank-id" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Вопрос #1</span>
+                                <span id="exam-q-block" class="px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 font-medium text-xs">Блок 1</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div id="exam-q-badges" class="flex flex-wrap gap-1.5"></div>
+                                <button id="btn-exam-flag" class="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1">
+                                    <span>🚩</span> <span id="exam-flag-label">На проверку</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h3 id="exam-q-text" class="text-base sm:text-xl font-bold text-slate-900 leading-snug"></h3>
+                        <p id="exam-q-instruction" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit">Выберите 1 правильный ответ</p>
+
+                        <!-- Варианты ответа -->
+                        <div id="exam-options-container" class="grid grid-cols-1 gap-2.5">
+                            <!-- Генерируется через JS -->
+                        </div>
+
+                        <!-- Кнопка подтверждения для вопросов с несколькими ответами в обучающем режиме экзамена -->
+                        <div id="exam-multi-submit-wrap" class="hidden">
+                            <button id="btn-exam-confirm-multi" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition">
+                                Подтвердить выбранные ответы ✓
+                            </button>
+                        </div>
+
+                        <!-- Пояснение (если включен обучающий режим с мгновенным ответом) -->
+                        <div id="exam-instant-feedback" class="hidden p-3.5 rounded-xl border text-xs sm:text-sm font-medium"></div>
+
+                        <!-- Кнопки навигации под вопросом -->
+                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                            <button id="btn-exam-prev" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition">
+                                ← Предыдущий
+                            </button>
+                            <button id="btn-exam-next" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition shadow-sm">
+                                Следующий вопрос →
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Навигационная матрица 1–80 (4 колонки) -->
+                    <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Навигация по билету (1–80)</span>
+                            <span class="text-[11px] text-slate-400">Кликните на №</span>
+                        </div>
+                        <div id="exam-grid-nav" class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-8 gap-1.5">
+                            <!-- 80 кнопок генерируются через JS -->
+                        </div>
+                        <div class="flex flex-wrap gap-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span> Отвечен</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span> Не отвечен</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400 inline-block"></span> На проверку 🚩</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Экран результатов экзамена и работы над ошибками -->
+            <div id="exam-result-screen" class="hidden flex-col gap-5">
+                <div id="exam-verdict-card" class="rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <div id="exam-verdict-badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
+                                ИТОГ ТЕСТИРОВАНИЯ
+                            </div>
+                            <h2 id="exam-verdict-title" class="text-2xl sm:text-3xl font-extrabold"></h2>
+                            <p id="exam-verdict-subtitle" class="text-sm mt-1 opacity-90"></p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200/80 shrink-0">
+                            <div class="text-center px-3">
+                                <div id="exam-res-score" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0 / 80</div>
+                                <div class="text-[11px] font-bold text-slate-500 uppercase">Правильных</div>
+                            </div>
+                            <div class="h-8 w-px bg-slate-300"></div>
+                            <div class="text-center px-3">
+                                <div id="exam-res-pct" class="text-2xl sm:text-3xl font-extrabold text-indigo-600">0%</div>
+                                <div class="text-[11px] font-bold text-slate-500 uppercase">Процент (нужно 87.5%)</div>
+                            </div>
+                            <div class="h-8 w-px bg-slate-300"></div>
+                            <div class="text-center px-3">
+                                <div id="exam-res-time" class="text-xl sm:text-2xl font-extrabold text-slate-700">00:00</div>
+                                <div class="text-[11px] font-bold text-slate-500 uppercase">Затрачено времени</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3 pt-2">
+                        <button id="btn-exam-new" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition text-sm">
+                            🔄 Новый экзамен (другие 80 вопросов)
+                        </button>
+                        <button id="btn-exam-retry-mistakes" class="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-sm transition text-sm">
+                            🎯 Прорешать только ошибки этого теста
+                        </button>
+                        <button id="btn-exam-save-mistakes" class="px-4 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold rounded-xl transition text-sm">
+                            ⭐ Добавить все ошибки в «Повторить»
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Детальный разбор вопросов экзамена -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <h3 class="font-extrabold text-base sm:text-lg text-slate-900">Разбор ответов экзаменационного билета</h3>
+                        <div class="flex gap-1.5">
+                            <button id="btn-exam-filter-mistakes" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white">
+                                Показать ошибки
+                            </button>
+                            <button id="btn-exam-filter-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
+                                Все вопросы билета (80)
+                            </button>
+                        </div>
+                    </div>
+                    <div id="exam-review-list" class="flex flex-col gap-3">
+                        <!-- Генерируется через JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== РЕЖИМ: ФЛЕШ-КАРТОЧКИ (КВИЗЛЕТ) ==================== -->
+        <section id="view-flashcards" class="flex-1 flex flex-col gap-4">
+            <!-- Навигация над карточкой -->
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-2">
+                    <span id="fc-counter" class="text-sm font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg">
+                        Карточка 1 из 414
+                    </span>
+                    <span id="fc-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+                        Не изучено
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-fc-shuffle" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+                        🔀 Перемешать
+                    </button>
+                    <div class="flex items-center gap-1 text-xs text-slate-600">
+                        <span>Перейти к №:</span>
+                        <input id="fc-jump-input" type="number" min="1" max="414" placeholder="№" class="w-16 px-2 py-1 border border-slate-300 rounded-lg text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D Карточка -->
+            <div class="perspective-1000 w-full max-w-3xl mx-auto my-1">
+                <div id="flashcard-container" class="w-full min-h-[300px] sm:min-h-[340px] cursor-pointer select-none relative">
+                    <div id="flashcard-inner" class="w-full min-h-[300px] sm:min-h-[340px] transform-style-3d relative">
+                        
+                        <!-- Лицевая сторона (Вопрос) -->
+                        <div class="backface-hidden absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-slate-200 p-6 sm:p-8 flex flex-col justify-between hover:border-indigo-300 transition">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span id="fc-q-id" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs">Вопрос #1</span>
+                                    <span id="fc-q-block" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs">Блок 1</span>
+                                </div>
+                                <div id="fc-q-badges" class="flex flex-wrap gap-1.5"></div>
+                            </div>
+
+                            <div class="my-auto py-4 text-center">
+                                <p id="fc-q-text" class="text-lg sm:text-2xl font-bold text-slate-800 leading-relaxed"></p>
+                            </div>
+
+                            <div class="text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-1.5">
+                                <span>👆 Нажмите на карточку или клавишу Пробел, чтобы увидеть ответ</span>
+                            </div>
+                        </div>
+
+                        <!-- Обратная сторона (Ответ) -->
+                        <div class="backface-hidden rotate-y-180 absolute inset-0 bg-gradient-to-br from-emerald-950 via-teal-900 to-indigo-950 text-white rounded-2xl shadow-md border-2 border-teal-500/40 p-6 sm:p-8 flex flex-col justify-between">
+                            <div class="flex items-center justify-between">
+                                <span id="fc-a-id" class="px-2.5 py-1 rounded-lg bg-white/15 text-teal-200 font-bold text-xs">Правильный ответ</span>
+                                <span class="text-xs text-teal-200 font-medium">Нажмите, чтобы вернуться к вопросу</span>
+                            </div>
+
+                            <div class="my-auto py-4 text-center space-y-3">
+                                <p id="fc-a-text" class="text-lg sm:text-2xl font-extrabold text-emerald-300 leading-relaxed"></p>
+                                <div id="fc-a-note" class="hidden max-w-xl mx-auto p-3 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs sm:text-sm leading-snug"></div>
+                            </div>
+
+                            <div class="text-center text-xs text-teal-200/80">
+                                Оцените знание карточки кнопками ниже
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопки управления под карточкой -->
+            <div class="max-w-3xl w-full mx-auto grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <button id="btn-fc-prev" class="py-3 px-4 rounded-xl bg-white border border-slate-300 font-semibold text-sm text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 shadow-sm">
+                    ⬅️ Назад
+                </button>
+                <button id="btn-fc-review" class="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-sm">
+                    ⭐ Повторить (1)
+                </button>
+                <button id="btn-fc-known" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-sm">
+                    ✅ Знаю! (2)
+                </button>
+                <button id="btn-fc-next" class="py-3 px-4 rounded-xl bg-white border border-slate-300 font-semibold text-sm text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 shadow-sm">
+                    Вперёд ➡️
+                </button>
+            </div>
+        </section>
+
+        <!-- ==================== РЕЖИМ 2: ТЕСТОВЫЙ ТРЕНАЖЁР ==================== -->
+        <section id="view-quiz" class="hidden flex-1 flex flex-col gap-4">
+            <div class="bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-3">
+                    <span id="quiz-counter" class="text-sm font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg">
+                        Вопрос 1 из 414
+                    </span>
+                    <span id="quiz-score" class="text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg">
+                        Верно: 0 / 0 (0%)
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btn-quiz-shuffle" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        🔀 Случайный порядок
+                    </button>
+                    <button id="btn-quiz-reset-score" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Сбросить счёт теста
+                    </button>
+                </div>
+            </div>
+
+            <div class="max-w-3xl w-full mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 flex flex-col gap-5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span id="quiz-q-id" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs">Вопрос #1</span>
+                        <span id="quiz-q-block" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs">Блок 1</span>
+                    </div>
+                    <div id="quiz-q-badges" class="flex gap-1.5"></div>
+                </div>
+
+                <h2 id="quiz-q-text" class="text-base sm:text-xl font-bold text-slate-800 leading-snug"></h2>
+                <p id="quiz-q-instruction" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit">Выберите 1 правильный ответ</p>
+
+                <!-- Варианты ответа -->
+                <div id="quiz-options" class="grid grid-cols-1 gap-2.5">
+                    <!-- Генерируется через JS -->
+                </div>
+
+                <!-- Кнопка подтверждения для вопросов с несколькими правильными ответами -->
+                <div id="quiz-multi-submit-wrap" class="hidden">
+                    <button id="btn-quiz-submit-multi" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition text-sm">
+                        Подтвердить выбранные ответы ✓
+                    </button>
+                </div>
+
+                <!-- Блок обратной связи после ответа -->
+                <div id="quiz-feedback" class="hidden p-4 rounded-xl border text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div id="quiz-feedback-text" class="font-medium leading-snug"></div>
+                    <button id="btn-quiz-next" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shrink-0 transition shadow-sm">
+                        Следующий вопрос ➡️
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== РЕЖИМ 3: ПОЛНЫЙ СПИСОК (ШПАРГАЛКА) ==================== -->
+        <section id="view-list" class="hidden flex-1 flex flex-col gap-3">
+            <div class="bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="text-sm font-bold text-slate-700">
+                    Отображается вопросов: <span id="list-count" class="text-indigo-600">414</span>
+                </div>
+                <label class="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition">
+                    <input id="toggle-blur-answers" type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
+                    <span>Скрыть ответы для самопроверки (клик по ответу — показать)</span>
+                </label>
+            </div>
+
+            <div id="list-container" class="flex flex-col gap-2.5">
+                <!-- Генерируется через JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Модальное окно подтверждения сброса прогресса -->
+    <div id="reset-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <h3 class="text-lg font-bold text-slate-900">Сбросить весь прогресс обучения?</h3>
+            <p class="text-sm text-slate-600 mt-2">
+                Все отметки «Знаю» и «Повторить» для 414 вопросов будут обнулены. Это действие нельзя отменить.
+            </p>
+            <div class="mt-5 flex justify-end gap-2.5">
+                <button id="btn-cancel-reset" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
+                    Отмена
+                </button>
+                <button id="btn-confirm-reset" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition">
+                    Да, сбросить
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Скрипт базы данных (все 414 вопросов со своими вариантами ответов) и логики приложения -->
+    <script>
+        // Справочник 7 тематических блоков
+        const BLOCKS = [
+            { id: 1, short: "Блок 1: История, этика и право", name: "История сестринского дела, этика, деонтология и медицинское право" },
+            { id: 2, short: "Блок 2: Сестр. процесс и ЗОЖ", name: "Сестринский процесс, теория потребностей, обучение и ЗОЖ" },
+            { id: 3, short: "Блок 3: Приёмное, уход и гериатрия", name: "Приёмное отделение, документация, личная гигиена, биомеханика и гериатрия" },
+            { id: 4, short: "Блок 4: Инф. безопасность и СЭР", name: "Инфекционная безопасность, СЭР, медицинские отходы, дезинфекция и стерилизация" },
+            { id: 5, short: "Блок 5: Лихорадка, физио и пролежни", name: "Термометрия, лихорадка, простейшая физиотерапия, оксигенотерапия и пролежни" },
+            { id: 6, short: "Блок 6: Инъекции, НС и СЛР", name: "Фармакотерапия, инъекции, оборот НС и ПВ, неотложная помощь и реанимация" },
+            { id: 7, short: "Блок 7: Зонды, клизмы и анализы", name: "Зондовые манипуляции, клизмы, стомы, катетеризация, диетология и диагностика" }
+        ];
+
+        // Единая выверенная база из 414 отдельных вопросов первичной аккредитации СПО «Сестринское дело»
+        // Каждый вопрос имеет собственный набор вариантов ответа (разделитель ~).
+        // Варианты, начинающиеся со знака *, являются правильными (если таких вариантов >= 2, вопрос автоматически работает в режиме множественного выбора с чекбоксами).
+        const RAW_QUESTIONS_DATA = `
+1|1|Начало организованной женской помощи в России связано с преобразованиями Петра I, когда вышел указ о службе женщин в:|*госпиталях~воспитательных домах~приютах для «бедных вдов»~общинах сестёр милосердия
+2|1|Год появления приютов для «бедных вдов»:|*1803~1818~1715~1812
+3|1|Институт сердобольных вдов явился прототипом общин:|*сестёр милосердия~Красного Креста~акушерок~сиделок
+4|1|40–50-е годы XIX столетия — создание в Петербурге и Москве:|*общин сестёр милосердия~воспитательных домов~«вдовьих домов»~общин Красного Креста
+5|1|Первая община сестёр милосердия в России:|*Свято-Троицкая~Покровская~Георгиевская~Крестовоздвиженская
+6|1|В период Крымской кампании была создана община сестёр милосердия:|*Крестовоздвиженская~Покровская~Георгиевская~Свято-Троицкая
+7|1|Год рождения профессии медицинской сестры в России:|*1854~1863~1803~1879
+8|1|С чем связан качественный, новый этап в развитии сестринского дела в России:|*С организацией общины сестёр милосердия~Со службой «Сердобольных вдов»~С открытием приютов для бедных вдов~С учреждением медицинских приказов
+9|1|Во время Крымской войны работа медицинских сестёр проходила под руководством врача:|*Н. Пирогова~А. Доброславина~С. Боткина~Н. Склифосовского
+10|1|Сестра милосердия — русская героиня Крымской войны:|*Д. Севастопольская~Ю. Вревская~С. Лебеда~Е. Бакунина
+11|1|Героиня Крымской войны англичанка:|*Ф. Найтингейл~В. Хендерсон~Д. Орем~Л. Мариллак
+12|1|Первым теоретиком сестринского дела является:|*Ф. Найтингейл~Ю. Вревская~Е. Бакунина~Д. Севастопольская
+13|1|Кто был основоположником Международного общества Красного Креста:|*А. Дюнан~В. Поль~Х. Оппель~В. Грубер
+14|1|Приоритет в создании Красного Креста (в учебном ключе сестринского дела) принадлежит:|*Ф. Найтингейл~Л. Мариллак~В. Хендерсон~Д. Орем
+15|1|Первую общину сестёр милосердия во Франции организовал:|*В. Поль~В. Грубер~Х. Оппель~А. Дюнан
+16|1|Термины «сестра милосердия» и «старшая сестра» впервые предложил:|*Х. Оппель~А. Дюнан~В. Грубер~В. Поль
+17|1|Программный документ «Философия сестринского дела в России» был принят:|*Голицыно, август 1993 г.~Санкт-Петербург, май 1991 г.~Москва, октябрь 1993 г.~Каменец-Подольск, январь 1995 г.
+18|1|Автор положения о 14 видах повседневной деятельности и помощи человеку в удовлетворении потребностей:|*Вирджиния Хендерсон~Е. М. Бакунина~Н. И. Пирогов~Ф. Найтингейл
+19|1|Наиболее чётко классифицировал потребности человека по иерархии:|*А. Маслоу~З. Фрейд~И. Павлов~Д. Орем
+20|1|Количество уровней в иерархии основных жизненно важных потребностей по А. Маслоу:|*5~10~14~3
+21|1|Фундаментальным основанием, формирующим медицинскую профессию, является:|*моральное~материальное~экономическое~познавательное~территориальное
+22|1|Основным принципом современной модели профессиональной этики является:|*Приоритет прав и уважения достоинства пациента~Принцип приоритета науки~Принцип безусловного исполнения приказов~Принцип патернализма
+23|1|Отличительным признаком профессиональной этики медицинских работников является:|*Осознанный выбор правил поведения~Право на поведение, отклонённое от нормы~Приоритет медицинской науки над интересами пациентов~Корпоративная закрытость
+24|1|Этика сестринского дела изучает:|*Особенности развития и зависимости морального поведения медицинской сестры от условий её практической деятельности~Отношения между членами коллектива и родственниками пациентов~Комплекс медицинских услуг, направленных на восстановление здоровья пациента~Правовые нормы оплаты труда медработников
+25|1|Понятие этики сестринского дела включает в себя:|*Научный раздел, включающий в себя этические и нравственные аспекты деятельности работников здравоохранения~Представление об оптимальной технической деятельности медицинских работников~Достижения в области современной клинической медицины~Свод правил внутреннего трудового распорядка
+26|1|К категориям этики сестринского дела относятся:|*Совесть, смысл жизни, долг, такт, достоинство, честь~Делай благо, делай добро~Меры равенства и неравенства~Презумпция невиновности и правоспособность
+27|1|Этические нормы поведения медицинской сестры отражены в документе:|*Этический кодекс медицинской сестры России~Этическое взаимоотношение сестры, врача и пациента~Сестринская карта истории больного~Должностная инструкция палатной медсестры
+28|1|К одному из международных документов в сфере медицинской этики относится:|*Международный кодекс медицинской этики~Конвенция о правах ребёнка~Европейская социальная хартия~Устав Всемирной организации здравоохранения
+29|1|Под медицинской деонтологией понимают:|*Профессиональный долг~Близкие доверительные отношения с пациентом~Равнодушие во время врачебного осмотра~Соблюдение трудового законодательства
+30|1|Участие в осуществлении коллективных мер, направленных на совершенствование методов борьбы с болезнями, относится к:|*моральному долгу~психологическому подходу~невербальному способу общения~административной обязанности
+31|1|Основополагающие правила, в соответствии с которыми медицинская сестра может определить, отвечает ли помощь соответствующему уровню качества, называются:|*Стандарт сестринского дела~Клинический протокол~Лист врачебных назначений~Квалификационная характеристика
+32|1|Основной законодательный акт, определяющий юридические аспекты взаимоотношений врача (медработника) и пациента:|*Федеральный закон «Об основах охраны здоровья граждан в РФ»~Трудовой кодекс РФ~Закон «О защите прав потребителей»~Гражданский кодекс РФ
+33|1|Пациент — это человек:|*Обратившийся за медицинской помощью и (или) находящийся под медицинским наблюдением~Только тяжелобольной человек~Здоровый человек, проходящий обучение~Любой посетитель, пришедший в медицинскую организацию
+34|1|Если личность пациента на фотографии установить невозможно, то:|*Врачебная тайна не нарушена~Врачебная тайна нарушена~Работника, сделавшего фото, увольняют~Налагается дисциплинарное взыскание
+35|1|Распространяется ли правило конфиденциальности (врачебной тайны) на умерших пациентов:|*Согласно законодательству РФ, распространяется~Согласно законодательству РФ, не распространяется~В зависимости от местных законов региона~Только в течение 1 года после смерти
+36|1|Работодатель имеет право получить информацию о заболевании своего работника в случае:|*при угрозе распространения инфекционных заболеваний, массовых отравлений и поражений~в любом случае для решения вопроса об оплате больничного листа~в случае, если заболевание имеет неблагоприятный прогноз~по устному запросу отдела кадров
+37|1|При конфликте интересов медицинский работник информирует об этом в письменной форме:|*Руководителя медицинской организации, в которой работает~Федеральный орган исполнительной власти~Прокуратуру~Власти в сфере здравоохранения
+38|1|Приступая к процедуре, медицинский работник должен:|*представиться, перед осмотром/процедурой получить согласие пациента на её проведение~приступить к процедуре, не озвучивая цели и объёма предполагаемых манипуляций~представиться, попросить пациента предоставить паспортные данные перед каждой процедурой~представиться, попросить пациента полностью раздеться
+39|1|При проведении внутривенной инъекции медицинская сестра должна:|*Информировать пациента о ходе проведения манипуляции и получить согласие~Получить согласие старшей медицинской сестры на проведение манипуляции~Обязательно вызвать лечащего врача~Не предупреждать пациента о сути манипуляции
+40|1|Нарушение правил хранения, учёта, отпуска наркотических средств или психотропных веществ, находящихся на специальном учёте, наказывается:|*Лишением права заниматься профессиональной деятельностью и свободы~Выговором~Замечанием~Увольнением по собственному желанию
+41|2|Потребность — это:|*Состояние индивида~Беременность~Симптом~Рефлекс
+42|2|Понятие «жизненно важная потребность человека» означает:|*Дефицит того, что существенно для здоровья и благополучия человека~Потребность человека в самоактуализации~Любое осознанное желание~Способность функционировать независимо
+43|2|К базовым уровням (ступеням) «пирамиды» А. Маслоу относятся следующие физиологические потребности человека:|*пить~*двигаться~уважение~общение
+44|2|К физиологической потребности первого уровня согласно иерархии А. Маслоу относится:|*дыхание~безопасность~социальное признание~самовыражение
+45|2|Физиологические базовые потребности пациента по А. Маслоу включают:|*сон, еду, утоление жажды~карьерный рост и престиж~творческую самореализацию~принадлежность к социальной группе
+46|2|К основным ступеням «пирамиды» потребностей А. Маслоу относятся все перечисленные, кроме:|*академических знаний~физиологических потребностей (пить, двигаться)~потребности в безопасности~потребности в общении и уважении
+47|2|Что такое сестринский процесс:|*выявление нарушенных потребностей, определение проблем пациента в связи с болезнью~выявление конкретной болезни у человека~составление врачебного плана лечения~определение главного клинического синдрома
+48|2|Цель сестринского процесса:|*удовлетворение основных потребностей организма~установление природы заболеваемости~определение очерёдности врачебных операций~назначение медикаментозного лечения
+49|2|Сестринский процесс в организации медицинской помощи:|*Документирует качество предоставляемой помощи~Сокращает рабочее время сестринского персонала~Приводит к освобождению вспомогательного персонала~Контролирует этиологию болезни
+50|2|Не основные характеристики сестринского процесса (что НЕ характерно):|*спонтанный~ориентированный на пациента~ориентированный на проблему со здоровьем~направленный на достижение цели ухода
+51|2|Количество этапов сестринского процесса:|*5~3~2~4
+52|2|Не является этапом сестринского процесса:|*Рентгенологическое обследование~Планирование сестринских вмешательств~Оценка состояния пациента~Интерпретация полученных данных (выявление проблем)
+53|2|Первый этап «сестринского процесса» включает:|*сбор информации о пациенте (беседу с пациентом и его родственниками)~профилактику осложнений~прогнозирование результатов ухода~оценку эффективности ухода
+54|2|Проведение 1-го этапа «сестринского процесса» требует от медсестры:|*Умения проводить беседу с больным и его родственниками~Навыков проведения люмбальной пункции~Назначения рентгенологических исследований~Постановки окончательного клинического диагноза
+55|2|К субъективному методу сестринского обследования относится:|*Расспрос пациента~Измерение артериального давления~Знакомство с данными лабораторных анализов~Определение отёков пальпацией
+56|2|Не входит в понятие «антропометрия»:|*Измерение артериального давления~Измерение роста~Определение массы тела~Измерение окружности грудной клетки
+57|2|Второй этап сестринского процесса:|*выявление проблем пациента~сбор информации о пациенте~определение целей сестринского процесса~планирование объёма сестринских вмешательств
+58|2|Сестринский диагноз — это:|*определение проблем пациента~установление нозологической формы заболевания~назначение диагностических процедур~прогноз исхода операции
+59|2|Сестринский диагноз включает в себя:|*Определение потенциальных проблем пациента в связи с болезнью~*Определение нарушенных существующих потребностей и проблем пациента в связи с болезнью~определение прогноза развития страдания~выявление конкретной болезни у конкретного человека
+60|2|Что такое действительные (настоящие) проблемы пациента:|*Проблемы, выявленные на момент обследования~Проблемы взаимоотношений пациента и медсестры~Проблемы, которые можно предвидеть в будущем~Финансовые проблемы~Проблемы, бывшие в прошлом
+61|2|У пациента нет стула 48 часов. Это проблема:|*настоящая~потенциальная~эмоциональная~второстепенная
+62|2|Что такое приоритетные проблемы пациента:|*проблемы, которые нужно решить в первую очередь~проблемы, связанные с хроническими сопутствующими болезнями~проблемы, возникающие при выписке из стационара~проблемы духовного характера
+63|2|Страх смерти является проблемой:|*Психологической~Физической~Социальной~Материальной
+64|2|Планирование сестринского ухода — это:|*третий этап сестринского процесса~первый этап сестринского процесса~второй этап сестринского процесса~пятый этап сестринского процесса
+65|2|Третий этап сестринского процесса включает:|*планирование сестринских вмешательств и определение целей ухода~сбор анамнеза жизни~выявление нарушенных потребностей~итоговую оценку результатов ухода
+66|2|Цели сестринского ухода по срокам достижения бывают:|*краткосрочными и долгосрочными~первичными и третичными~зависимыми и независимыми~субъективными и объективными
+67|2|Определение сестринского вмешательства:|*действия медицинской сестры, направленные на поддержку пациента, обеспечение комфорта и удовлетворение его потребностей~назначение курса антибиотикотерапии~проведение судебно-медицинской экспертизы~выдача листка нетрудоспособности
+68|2|Сестринские вмешательства могут включать:|*оценку действий~*советы~назначение лекарственных препаратов~проведение хирургических операций
+69|2|Что такое зависимая сестринская деятельность:|*выполнение медицинской сестрой назначений врача~обучение пациента самоуходу~смена нательного и постельного белья~контроль санитарного состояния тумбочек
+70|2|Независимое сестринское вмешательство — это:|*Действие по собственной инициативе медсестры в рамках её компетенции~Действие строго по назначению лечащего врача~Действие под контролем заведующего отделением~Назначение физиотерапевтического лечения
+71|2|Что такое независимая сестринская деятельность:|*обучение пациента самоуходу~проведение инфузионной терапии~выполнение медицинской сестрой назначений врача~назначение лабораторных исследований
+72|2|Процесс передачи информации между медсестрой и пациентом называется:|*Коммуникация~Обратная связь~Перцепция~Рефлексия
+73|2|К какому барьеру общения относится ситуация, когда пациент и медсестра разговаривают на разных языках:|*Фонетический барьер~Стилистический барьер~Логический барьер~Социально-культурный барьер
+74|2|К определению организации обучения медсестрой пациента относится определение:|*Целей занятий~*Времени и места занятий~*Содержания занятий~Назначения сильнодействующих препаратов
+75|2|Кто НЕ может быть у медицинских сестёр в роли обучаемых в рамках сестринской педагогики:|*врачи~пациенты~родственники пациентов~младший медицинский персонал
+76|2|Специальная организационная форма консультирования группы пациентов с одинаковым заболеванием:|*Школа пациентов~Углублённое индивидуальное консультирование~Массовое консультирование~Краткое консультирование
+77|2|Паллиативная помощь — это помощь:|*Временно облегчающая боль и тяжёлые проявления неизлечимой болезни~Полностью излечивающая основное заболевание~Санаторно-курортная реабилитация~Первая доврачебная помощь при травмах
+78|2|Медицинские сёстры стрессу и риску нервного истощения:|*Подвержены значительно~Подвержены незначительно~Не подвержены совсем~Подвержены только в первый год работы
+79|2|Более подвержены нервному истощению (выгоранию) медсёстры:|*Одержимые работой, стремящиеся к высоким результатам, очень обязательные~Умеющие организовать работу и отдых~Необязательные люди~Сочетающие работу с домашними обязанностями
+80|2|Постоянный стресс, связанный с работой и оказывающий негативное воздействие, может привести к:|*Нервному истощению~Улучшению качества ухода~Росту энтузиазма~Повышению иммунитета
+81|2|Главным в профессиональном развитии и сохранении здоровья медсестры является:|*Эффективная организация труда~Развитие здравоохранения в целом~Высокая оплата труда~Высокий уровень жизни
+82|2|Продолжительная умственная работа без отдыха может приводить к:|*Снижению устойчивости внимания~Улучшению запоминания информации~Повышению сосредоточения внимания~Улучшению восприятия информации
+83|2|Под здоровым образом жизни понимают:|*Активную жизнедеятельность, направленную на укрепление и сохранение здоровья~Борьбу за чистоту среды обитания~Творчество как источник положительных эмоций~Регулярные профилактические осмотры
+84|2|Физическая активность способствует:|*Поддержанию обмена веществ на оптимальном уровне~Перестройке жирового обмена в сторону увеличения содержания жировой ткани~Снижению приспособительных и компенсаторных реакций~Уменьшению потребности в воде
+85|3|Занятия физическими упражнениями способствуют:|*Большей устойчивости организма к стрессам~Уменьшению потребности в пище~Перестройке жирового обмена в сторону увеличения жировой ткани~Снижению приспособительных и компенсаторных реакций
+86|3|Последствием гиподинамии является:|*Снижение силы и выносливости мышц~Снижение частоты сердечных сокращений в покое~Повышение работоспособности организма~Повышение тонуса и эластичности мышц
+87|3|При превышении энергозатрат над энергоёмкостью (калорийностью) пищи масса тела:|*уменьшается~увеличивается~остаётся неизменной~колеблется в зависимости от времени года
+88|3|Методом профилактики бессонницы является:|*Приём пищи не менее чем за 2–3 часа до сна~Отказ от прогулок перед сном~Занятие интенсивными танцами в вечернее время~Посещение силовых фитнес-тренировок поздно вечером
+89|3|Вынужденное положение в постели пациент принимает с целью:|*Облегчения своего состояния~Более удобного приёма пищи~Уменьшения опасности возникновения пролежней~Облегчения медперсоналу выполнения функций по уходу
+90|3|Помещение приёмного отделения, в котором проводится первая медицинская помощь и осмотр вновь поступившему пациенту:|*Смотровой кабинет~Клизменный кабинет~Санитарный пропускник~Палата-бокс
+91|3|Документ приёмного отделения, который заполняется независимо от госпитализации:|*Журнал учёта приёма больных и отказов в госпитализации~Статистическая карта выбывшего из стационара~Журнал учёта инфекционных больных~Медицинская карта стационарного больного
+92|3|В приёмном отделении стационара медсестра заполняет:|*Паспортную часть истории болезни~Бланки направлений на все лабораторные исследования~Врачебный дневник карты стационарного больного~Статистическую карту выбывшего из стационара
+93|3|Объём и метод санитарной обработки пациента при поступлении определяет:|*Врач приёмного отделения~Медицинская сестра приёмного отделения~Медицинская сестра смотрового кабинета~Персонал санпропускника
+94|3|Санитарная обработка пациента, поступающего в стационар, проводится:|*После врачебного осмотра~До регистрации пациента~Без осмотра кожных покровов~Только в профильном лечебном отделении
+95|3|К частичной санобработке пациента относится:|*обтирание~гигиенический душ~гигиеническая ванна~плавание в бассейне
+96|3|Температура воды для проведения гигиенической ванны составляет (°C):|*36–37~20–23~49–51~44–46
+97|3|Температура воздуха в помещении при принятии гигиенической ванны составляет (°C):|*25~18~20~32
+98|3|Все пациенты, находящиеся на стационарном лечении, осматриваются на педикулёз каждые (дней):|*7~10~3~14
+99|3|Противопедикулёзные мероприятия в медучреждении осуществляет:|*Медицинский персонал~Врач приёмного отделения лично~Сам пациент~Родственники пациента
+100|3|В случае обнаружения педикулёза на титульном листе медицинской карты стационарного больного ставят обозначение:|*«P»~«B»~«B-20»~«A»
+101|3|В случае обнаружения педикулёза отметка «P» ставится:|*На титульном листе медицинской карты стационарного больного~В листе врачебных назначений~В температурном листе~В порционном требовании
+102|3|При выявлении педикулёза медицинская сестра заполняет:|*Экстренное извещение об инфекционном заболевании~Статистическую карту выбывшего из стационара~Журнал учёта амбулаторных больных~Листок нетрудоспособности
+103|3|Для обработки волосистой части головы при обнаружении педикулёза используется:|*Лосьон «Ниттифор»~Раствор глюкозы~Раствор фурацилина~Порошок гидрокарбоната натрия
+104|3|К средствам для обработки волосистой части головы при педикулёзе относят:|*Шампуни «Медифокс», «Ниттифор», лосьон «Анти-бит»~3% раствор перекиси водорода и фурацилин~Раствор хлоргексидина и мирамистин~Мазь Вишневского и пасту Лассара
+105|3|Вид транспортировки пациента в отделение определяет:|*Врач в соответствии с состоянием больного~Врач в соответствии с пожеланием больного~Медицинская сестра в соответствии с самочувствием больного~Медицинская сестра в соответствии с состоянием больного
+106|3|При транспортировке больного в кресле-каталке представляет опасность нахождение рук:|*За пределами подлокотников~На животе~В скрещённом положении на груди~На подлокотниках
+107|3|При перемещении пациента равновесие тела медсестры будет более устойчиво, если расстояние между стопами будет:|*30 см~10 см~50 см~70 см
+108|3|Во время перемещения пациента положение спины медицинской сестры должно быть:|*прямым~согнутым в пояснице~наклонённым вперёд под углом 45 градусов~скрученным в грудном отделе
+109|3|При подготовке к перемещению пациента в постели медицинской сестре следует предварительно:|*убрать подушку и одеяло~приподнять изголовье кровати на 60 градусов~опустить боковые поручни с обеих сторон и снять тормоз~подложить резиновый круг под плечи
+110|3|Для смены постельного белья продольным способом пациенту, находящемуся на строгом постельном режиме, придают положение:|*на боку~на животе~сидя с опущенными ногами~полусидя (Фаулера)
+111|3|Положением «Фаулера» называется положение пациента:|*Полулёжа (полусидя), с приподнятым изголовьем кровати под углом 45–60 градусов~На боку, руки согнуты в локтевых суставах~Полусидя, с приподнятым изголовьем кровати под углом 15–20 градусов~Промежуточное положение между положением лёжа на боку и лёжа на животе
+112|3|Положение Симса предполагает размещение пациента в постели:|*Промежуточное положение между положением лёжа на боку и лёжа на животе~Полусидя, с приподнятым изголовьем кровати под углом 25–30 градусов~На боку, руки согнуты в локтевых суставах~Полулёжа, с приподнятым изголовьем кровати под углом 45–60 градусов
+113|3|Журнал регистрации пациентов, поступающих в лечебное отделение, ведёт:|*Постовая (палатная) медицинская сестра~Медсестра приёмного отделения~Старшая медицинская сестра~Медсестра процедурного кабинета
+114|3|Журнал приёма и передачи дежурств содержит:|*Перечень срочных назначений~Полные паспортные данные всех пациентов~Температурный лист~Отказ от госпитализации
+115|3|Дневник в «Медицинской карте стационарного больного» (истории болезни, ф. 003/у) заполняет:|*Лечащий врач~Заведующий отделением~Старшая медицинская сестра~Постовая медицинская сестра
+116|3|Назначенная врачом диета фиксируется в:|*Листе назначений~Требовании на лекарственные препараты~Температурном листе~Журнале учёта процедур
+117|3|Палатная медицинская сестра заполняет «порционник» на лечебное питание:|*Ежедневно~Перед каждым приёмом пищи~2 раза в день~1 раз в неделю
+118|3|Сводное порционное требование на питание отделения заполняет:|*Старшая медсестра (на основе данных постовой медсестры)~Медсестра процедурного кабинета~Участковая медсестра~Диетврач приёмного отделения
+119|3|«Температурный лист» пациента заполняется:|*Ежедневно утром и вечером~Ежедневно только вечером~Ежедневно только утром~Через день
+120|3|Температурная кривая (полученные результаты термометрии) регистрируется в:|*температурном листе~дневнике истории болезни~журнале поступления больных~листе врачебных назначений
+121|3|Медицинский документ, в котором хранится информация, связанная с профессиональной деятельностью работника и её влиянием на здоровье:|*Паспорт здоровья~Медицинская карта стационарного больного~Обменная карта родильного дома~Карта диспансерного наблюдения
+122|3|Журнал учёта взятия крови на ВИЧ заполняет:|*Процедурная медицинская сестра~Старшая медицинская сестра~Операционная медицинская сестра~Палатная медицинская сестра
+123|3|Основной функциональной обязанностью процедурной медицинской сестры стационара является:|*Проведение парентеральных вмешательств~Организация выписки, учёта, хранения лекарственных препаратов отделения~Контроль выполнения врачебных назначений постовыми сёстрами~Непосредственный гигиенический уход за пациентами в палатах
+124|3|К инвазивным процедурам относится:|*Проведение в/м, в/в, п/к инъекций~Подготовка пациента к рентгенологическому исследованию~Пассивное кормление пациента с ложки~Проведение мероприятий по личной гигиене тяжелобольных
+125|3|Для предупреждения высыхания роговицы пациенту в коме нужно:|*Периодически закапывать в глаза изотонический раствор натрия хлорида~Накладывать тугую бинокулярную повязку~Смазывать верхние веки спиртовым раствором йода~Проводить инфузионную терапию по назначению врача
+126|3|С целью удаления сухих корочек из носовой полости используется:|*Вазелиновое масло~10% раствор камфорного спирта~3% раствор перекиси водорода~70% этиловый спирт
+127|3|Температура капель при закапывании в глаз:|*20–24 °C (комнатная)~36–37 °C~12–15 °C~25–30 °C
+128|3|Какова вместимость нижней конъюнктивальной складки глаза:|*1–2 капли~2–3 капли~4–5 капель~3–4 капли
+129|3|Причина нецелесообразного закапывания в глаза более 1–2 капель лекарственных растворов:|*в конъюнктивальной полости не удерживается больше 1–2 капель раствора~большое количество жидкости вызывает сильное болевое ощущение~глазные капли всегда содержат ядовитые вещества~большое количество жидкости повреждает роговицу
+130|3|Температура капель при закапывании в ухо:|*37–38 °C~20–24 °C~15–18 °C~45–50 °C
+131|3|У пожилых людей физиологически снижается:|*Слух, зрение~Целостность восприятия~Болевая чувствительность~Абстрактность мышления
+132|3|При уходе за гериатрическим пациентом медицинская сестра в первую очередь должна обеспечить:|*Безопасность пациента~Сохранение социальных контактов~Проведение косметических процедур~Высококалорийное питание пациента
+133|3|Для профилактики травматизма пожилому человеку рекомендуется носить обувь:|*на низком каблуке~на высоком каблуке~с высоким голенищем~без задника (тапочки-шлёпанцы)
+134|3|Лицам пожилого и старческого возраста лекарственные препараты:|*Назначаются в уменьшенной дозе~Назначаются в увеличенной дозе~Запиваются только молоком~Назначаются в большом количестве одновременно
+135|4|Первичная профилактика инфекционных заболеваний заключается в информировании населения о:|*Биологических особенностях возбудителя и путях предупреждения заражения~Диагностике развившихся заболеваний~Стационарном лечении~Клинических симптомах осложнений
+136|4|Риск микробного заражения у медперсонала возникает при контакте с инфицированными:|*Пациентами, секретами и выделениями пациентов, ранами и повязками~Чистым постельным бельём~Стерильными медицинскими изделиями~Запечатанными лекарственными препаратами
+137|4|Основной путь заражения медперсонала вирусными гепатитами В и ВИЧ-инфекцией:|*Инокуляция~Проглатывание~Имплантация~Вдыхание
+138|4|Основной путь заражения пациентов гнойной хирургической инфекцией через нестерильный шовный материал и имплантаты:|*Имплантация~Вдыхание~Проглатывание~Трансмиссивный
+139|4|Наиболее устойчивы к воздействию физических, химических и биологических факторов возбудители:|*Вирусного гепатита В~Дизентерии~Сальмонеллёза~Холеры
+140|4|Основной механизм передачи вирусного гепатита А:|*Фекально-оральный~Аэрогенный~Вертикальный~Половой
+141|4|Источник инфекции при эпидемическом гриппе:|*Больной человек~Животные — резервуар вируса~Реконвалесцент после выписки~Птицы — резервуар вируса
+142|4|При гриппе пациенту рекомендуют:|*Обильное витаминизированное питьё~Обеззараживать испражнения хлорной известью~Снижать температуру тела ниже 38 °C~Самостоятельно принимать антибиотики
+143|4|Что лечат антитоксической сывороткой:|*Дифтерию~Менингококковую инфекцию~Сыпной тиф~Сальмонеллёз
+144|4|Одноразовые медицинские маски медицинский персонал меняет:|*Каждые 2 часа и по мере увлажнения~После каждой манипуляции~Каждые 6 часов~1 раз в смену
+145|4|Факторы, влияющие на безопасность больничной среды для пациентов и медперсонала:|*Химические, шум, вибрация, ультразвук, излучения, условия труда и СЭР~Только условия отдыха персонала~Только архитектурная планировка здания~Климатический пояс региона
+146|4|К факторам физической природы, воздействующим на медицинских работников в процессе их труда, относятся:|*Ультразвук~*Ультрафиолетовое, лазерное и ионизирующее излучение~*Рентгеновское излучение~Пары химических веществ и лекарственных препаратов
+147|4|Наилучшей защитой для персонала, который по характеру работы подвергается воздействию ионизирующего облучения, является:|*Расстояние, укрытие и скорость процедуры~Учёт полученной дозы облучения~Только расстояние~Только расстояние и укрытие
+148|4|Дайте определение термину «асептика»:|*комплекс мероприятий, направленных на предупреждение проникновения микроорганизмов в рану и в организм в целом~комплекс лечебно-профилактических мероприятий, направленных на ликвидацию микроорганизмов в ране~уничтожение грызунов и насекомых в стационаре~механическая очистка инструментов от крови
+149|4|Полное уничтожение микроорганизмов и их спор называется:|*Стерилизация~Демеркуризация~Дезинсекция~Дезинфекция
+150|4|Минимальная температура, вызывающая гибель спороносных бактерий:|*110 °C~80 °C~140 °C~60 °C
+151|4|Ведущим методом стерилизации металлических хирургических инструментов по ГОСТу является:|*Пар под давлением (и сухой горячий воздух)~Кипячение в дистиллированной воде~Прокаливание над пламенем горелки~Облучение бактерицидной лампой
+152|4|Температурный режим сушки медицинского инструментария перед стерилизацией составляет (°C):|*85~65~75~95
+153|4|Физический контроль режима стерилизации предусматривает:|*Показания контрольно-измерительных приборов стерилизатора~Использование химических индикаторов~Контроль остаточной влажности обработанных изделий~Использование биотестов со спорами бактерий
+154|4|Самым надёжным методом контроля качества стерилизации является:|*Бактериологический~Химический~Механический~Физический
+155|4|При положительной азопирамовой пробе (на наличие скрытой крови) появляется окрашивание:|*Фиолетовое, переходящее в розово-сиреневое~Изумрудно-зелёное~Лимонно-жёлтое~Чёрно-бурое
+156|4|При положительной фенолфталеиновой пробе (на остатки моющего средства) появляется:|*Розовое окрашивание~Сине-зелёное окрашивание~Жёлто-оранжевое окрашивание~Чёрное окрашивание
+157|4|При положительной пробе с Суданом III (на жировые загрязнения) появляется окрашивание:|*Жёлтое~Фиолетовое~Сине-зелёное~Малиновое
+158|4|Кушетку, которую используют для осмотра пациента, необходимо дезинфицировать:|*Двукратным протиранием после каждого пациента~Протиранием в конце рабочей смены~Однократным протиранием 1 раз в сутки~Орошением водой после каждого пациента
+159|4|Механический способ дезинфекции:|*Влажная уборка помещений, проветривание и фильтрация~Кипячение и автоклавирование~Ультрафиолетовое облучение~Использование раствора формалина
+160|4|Химический способ дезинфекции:|*Использование формалина (и других химических дезсредств)~Фильтрация воздуха~Ультрафиолетовое облучение~Влажная уборка помещений без дезсредств
+161|4|Для альдегидсодержащих дезинфицирующих средств характерно:|*Высокая токсичность~Малотоксичны~Узкого спектра действия~Без запаха и не фиксируют органику
+162|4|Дезинфектанты с моющими свойствами и низкой токсичностью чаще относятся к группе:|*ПАВ (поверхностно-активных веществ)~Кислородсодержащих~Альдегидсодержащих~Хлорсодержащих
+163|4|Рабочие растворы хлорамина используются:|*Однократно~В течение недели~До изменения окраски раствора~Многократно в течение месяца
+164|4|Дезинфекция электронного медицинского термометра проводится:|*согласно руководству по эксплуатации производителя~путём кипячения в течение 30 минут~полным погружением в 6% перекись водорода на 6 часов~обработкой в сухожаровом шкафу при 180 °C
+165|4|К правилам хранения медицинских термометров относится:|*размещение в сухом виде после предварительной дезинфекции~хранение в стакане с 96% этиловым спиртом~хранение на подоконнике под прямыми солнечными лучами~хранение без предварительной дезинфекции
+166|4|Нейтрализация ртути и её паров называется:|*Демеркуризация~Дезинсекция~Дезинфекция~Дератизация
+167|4|К демеркуризаторам из перечисленных растворов относится:|*4% раствор мыла в 5% водном растворе соды~3% раствор хлорамина~Сайдекс 2,5%~0,9% раствор хлорида натрия
+168|4|Место образования чрезвычайно опасных медицинских отходов (класс В):|*Фтизиатрические и микологические клиники~Терапевтические отделения~Внекорпусные территории ЛПУ~Пищеблоки и буфетные
+169|4|Утилизацией медицинских отходов называют:|*Обработку отходов с применением технологий, ведущих к утрате всех опасных свойств отходов~Захоронение отходов в местах, установленных законодательством~Изменение внешнего вида отходов без дезинфекции~Сбор отходов в одноразовые пакеты в отделениях
+170|4|Обезвреживанием медицинских отходов называется:|*Уменьшение массы отходов, изменение их состава, физических и химических свойств в целях снижения негативного воздействия на здоровье человека и окружающую среду~Захоронение в местах, установленных действующим законодательством~Использование отходов в качестве вторичных ресурсов~Временное хранение отходов в корпусе больницы
+171|4|Обезвреживанием медицинских отходов (при аппаратной обработке) также считается:|*Изменение внешнего вида отходов, исключающее возможность их повторного использования~Сортировка отходов по цвету пакетов~Взвешивание пакетов перед вывозом~Маркировка контейнеров бирками
+172|4|Живые вакцины подлежат хранению:|*В холодильнике~На складе при комнатной температуре~В термостате при +37 °C~В барокамере
+173|4|Вакцины должны храниться в:|*Холодильнике при температуре от +2 до +8 °C~Кабинете участковой медицинской сестры при +20 °C~Сейфе при комнатной температуре~Специально отведённом шкафу
+174|4|Температуру в холодильнике, где хранят иммунобиологические лекарственные препараты, регистрируют в специальном журнале:|*Каждые 12 часов~Каждый час~1 раз в сутки~1 раз в 7 дней
+175|4|При побочном действии вакцины заполняется:|*Экстренное извещение~Единый талон амбулаторного пациента~Медицинская карта стационарного больного~Карта здоровья
+176|4|Инсулин (запас во флаконах) хранят:|*При температуре +1...+10 °C (в холодильнике)~При комнатной температуре на свету~В замороженном виде~При -5...+5 °C в морозильной камере
+177|4|Для профилактики токсического действия лекарств избыточный воздух из шприца необходимо выталкивать в:|*ватку (стерильный ватный шарик или колпачок)~атмосферу~салфетку на полу~пустую склянку
+178|4|К осложнениям, связанным с нарушением правил асептики и антисептики при проведении инъекций, относятся:|*Постинъекционные инфильтраты и абсцессы~Воздушные эмболии~Аллергические реакции~Жировые эмболии
+179|4|В случае образования постинъекционного инфильтрата медицинская сестра должна:|*Довести до сведения врача и сделать запись в журнал регистрации постинъекционных осложнений~Обработать инфильтрат 5% раствором йода без ведома врача~Самостоятельно отменить последующие инъекции~Направить пациента к хирургу без осмотра лечащего врача
+180|4|При недержании мочи у женщин в пожилом возрасте желательно использование:|*Памперсов (впитывающих подгузников и урологических прокладок)~Постоянного резинового судна в постели~Грелки на надлобковую область~Ограничения питьевого режима до 200 мл в сутки
+181|4|Для профилактики застойной пневмонии у лежачих пациентов необходимо применять:|*Перкуторный массаж грудной клетки~Массаж головы~Общий массаж живота~Массаж нижних конечностей
+182|4|Метод дыхательной гимнастики для профилактики застойной пневмонии у лежачих пациентов:|*Плавный затяжной выдох через трубочку в стакан с водой~Частое поверхностное дыхание открытым ртом~Задержка дыхания на вдохе на 60 секунд~Форсированный вдох через рот
+183|4|Действия медсестры в первые дни послеоперационного периода у пациента:|*Профилактика пролежней~*Выхаживание~Самостоятельное назначение общего массажа~Назначение горячих гигиенических ванн
+184|4|Не важное мероприятие при уходе за больными с неосложнённым ожирением:|*регулярная термометрия~систематическое взвешивание~правильная организация питания~уход за кожными покровами
+185|5|Терморегуляция — это процесс, в результате которого:|*регулируется образование и выделение тепла~регулируется только выделение тепла~регулируется только образование тепла~поглощается тепло организмом из внешней среды
+186|5|Причиной лихорадки является нарушение процесса:|*терморегуляции~потоотделения~внешнего дыхания~системного кровообращения
+187|5|Физиологическая температура тела пациента чаще бывает ниже:|*утром~вечером~в обед~после приёма пищи
+188|5|Температуру тела у пациентов в стационаре измеряют:|*Утром натощак (с 07:00 до 09:00 часов) и вечером (с 17:00 до 19:00 часов)~Только перед ночным сном~Раз в день с 12:00 до 13:00 часов~Сразу после плотного завтрака
+189|5|Температуру тела в подмышечной впадине ртутным/максимальным термометром измеряют:|*10 минут~3 минуты~5 минут~20 минут
+190|5|Ректальная температура пациента 37,4 °C (в прямой кишке) характеризуется как:|*Нормальная~Субфебрильная~Умеренно высокая~Пониженная
+191|5|Лихорадка — это повышение температуры тела выше:|*37,0 °C~36,0 °C~36,6 °C~35,5 °C
+192|5|Температура тела 37,0–37,9 °C (37,1–38,0 °C) называется:|*Субфебрильная~Пиретическая~Гиперпиретическая~Фебрильная
+193|5|Фебрильной (умеренной лихорадкой) называется температура тела (°C):|*38,0–39,0 (38,1–39,0)~37,1–38,0~39,0–40,0~Выше 41,0
+194|5|Лихорадку называют пиретической (высокой), если температура тела:|*39–41 °C~37–38 °C~41 °C и выше~38–39 °C
+195|5|Для какой лихорадки характерны суточные колебания температуры тела не менее 1 °C без снижения до нормы:|*послабляющей~постоянной~гектической~извращённой
+196|5|Тип лихорадки с чередованием периодов высокой температуры (колебания не менее 1 °C) и периодов нормальной температуры:|*перемежающаяся~постоянная~волнообразная~возвратная
+197|5|Тип лихорадки, при которой суточные колебания температуры составляют 3–5 градусов, отмечаются ознобы и проливные поты:|*Гектическая~Постоянная~Субфебрильная~Волнообразная
+198|5|Извращённая лихорадка — это тип лихорадки, при которой:|*утренняя температура выше вечерней (утренняя максимальная, вечерняя нормальная)~колебания температуры в пределах 0,5–1,0 °C~суточные колебания температуры более 1,0 °C~утренняя температура нормальная, вечерняя максимальная
+199|5|В развитии лихорадки различают количество периодов:|*3~4~1~2
+200|5|Основным признаком 1-го периода лихорадки является:|*озноб~чувство жара~сильная жажда~рвота
+201|5|В первом периоде лихорадки у пациента наблюдают:|*Недомогание, ломота во всём теле, головная боль, озноб~Внезапная слабость, холодный липкий пот, снижение АД, нитевидный пульс~Слабость, чувство жара, усиленное потоотделение, гиперемия кожи~Бред, проливной пот, падение температуры
+202|5|В первом периоде лихорадки возможно применение:|*Грелки~Влажного холодного обёртывания~Холодного компресса на лоб~Пузыря со льдом
+203|5|Второй период лихорадки характеризуется:|*стабилизацией температуры на высоком уровне~быстрым подъёмом температуры и ознобом~критическим падением температуры~литическим снижением температуры
+204|5|Для лихорадки второго периода характерно появление:|*Чувства жара~Озноба и дрожи~Проливного пота~Гипотермии
+205|5|Основными признаками 2-го периода лихорадки являются:|*чувство жара~*жажда~озноб~мышечная дрожь
+206|5|Независимые сестринские вмешательства во 2-м периоде лихорадки:|*Холодный компресс на лоб, тёплое обильное питьё~Холодная примочка, горячие ножные ванны~Использование грелки к ногам, горячий чай, тёплое одеяло~Согревающий полуспиртовой компресс на грудную клетку
+207|5|Зависимые сестринские вмешательства во 2-м периоде лихорадки:|*Применение жаропонижающих препаратов разных форм по назначению врача~Использование грелки к ногам~Укрывание двумя тёплыми одеялами~Постановка горчичников на грудную клетку
+208|5|Независимое сестринское вмешательство при гипертермическом синдроме:|*холодные компрессы~*протирание кожи легкоиспаряющимися жидкостями (водой)~*пузырь со льдом на область крупных сосудов~жаропонижающие препараты внутримышечно
+209|5|Для лихорадки третьего периода характерно появление:|*слабости~*обильного потоотделения~чувства жара~озноба
+210|5|Критическое снижение температуры тела может привести к развитию:|*Коллапса~Острого коронарного синдрома~Острой дыхательной недостаточности~Кишечной непроходимости
+211|5|Появление у лихорадящего пациента резкой слабости, обильного холодного пота, бледности кожных покровов, нитевидного пульса и снижения АД наиболее вероятно при:|*Критическом снижении температуры~Литическом снижении высокой температуры~Субфебрилитете~Быстром и значительном повышении температуры
+212|5|Температурные раздражители кожи рефлекторно влияют на:|*широту просвета кровеносных сосудов, чувствительность организма, тонус мышц~группу крови и резус-фактор~анатомическое строение костей~кислотность желудочного сока напрямую
+213|5|Местные согревающие простейшие физиопроцедуры обусловлены влиянием на ткани:|*притока крови и кислорода за счёт расширения сосудов~спазма периферических капилляров~прямого охлаждения рецепторов кожи~снижения тканевого метаболизма
+214|5|Компоненты согревающего компресса:|*салфетка~*компрессная бумага~*вата~лейкопластырь
+215|5|Для постановки полуспиртового согревающего компресса необходимо приготовить:|*8-слойную салфетку, компрессную бумага, вату, этиловый спирт, бинт~8-слойную салфетку, компрессную бумагу, вату, зажим~8-слойную салфетку, компрессную бумагу, вату, этиловый спирт, зажим~4-слойную салфетку, вату, лейкопластырь
+216|5|Последовательность слоёв в согревающем компрессе (от кожи кнаружи):|*Влажная салфетка, компрессная бумага, вата, бинт~Влажная салфетка, вата, компрессная бумага, бинт~Компрессная бумага, влажная салфетка, вата, бинт~Вата, влажная салфетка, компрессная бумага, бинт
+217|5|Второй (средний) функциональный изолирующий слой согревающего компресса называют:|*Компрессная (вощёная) бумага~Марлевая салфетка~Утепляющий слой ваты~Фиксирующий бинт
+218|5|Какой концентрации спиртовой раствор используется для полуспиртовых компрессов:|*40–45%~70%~96%~15%
+219|5|Правильность постановки полуспиртового компресса контролируют:|*Через 1–1,5 часа~Через 10–20 минут~Через 2–2,5 часа~Сразу после постановки
+220|5|Согревающий компресс (полуспиртовой) ставят максимально на:|*6,0–8,0 часов~1,0–2,0 часа~24 часа~15–20 минут
+221|5|Показание к постановке влажного согревающего компресса (1 ответ):|*инфильтрат после инъекций~высокая лихорадка~острые боли в животе~легочное кровотечение
+222|5|Показания к постановке влажного согревающего компресса:|*Ушибы через сутки после травмы~*Местные воспалительные процессы (инфильтраты)~*Воспаление среднего уха~Боли в животе~Лихорадка
+223|5|Температура воды для горячего компресса:|*50–60 °C~25–30 °C~18–24 °C~36–37 °C
+224|5|Температура воды для холодного компресса:|*14–16 °C~20–28 °C~28–37 °C~38–40 °C
+225|5|Холодные компрессы (примочки) вызывают:|*охлаждение кожи и сужение кровеносных сосудов~расширение кровеносных сосудов и прилив крови~расслабление гладкой мускулатуры желчных путей~усиление местного кровотечения
+226|5|Температура воды для заполнения пузыря со льдом:|*12–15 °C~25–30 °C~36–37 °C~40–45 °C
+227|5|Показания к постановке пузыря со льдом:|*Ушибы в первые часы после травмы~*Гипертермия~*Внутренние кровотечения~Опухоли~Коллапс
+228|5|Пузырь со льдом способствует:|*утолению боли~*купированию судорог (и кровотечения)~*спазму сосудов~расширению сосудов
+229|5|Охлаждающий эффект пузыря со льдом связан с действием:|*болеутоляющим~*кровоостанавливающим~рассасывающим~согревающим
+230|5|Температура воды для наполнения резиновой грелки:|*60–65 °C~38–40 °C~80–90 °C~36–37 °C
+231|5|Показания к постановке грелки:|*Лихорадка в 1-м периоде~*Болевой синдром (почечная колика, неврит, миозит)~Боли в животе невыясненной этиологии~Кровоточивость, кровотечение
+232|5|Противопоказания для применения грелки:|*Кровоточивость, кровотечение~*Опухолевый процесс~*Боли в животе невыясненной этиологии~Лихорадка в 1-м периоде
+233|5|Температура воды для смачивания горчичников:|*40–45 °C~36–37 °C~50–60 °C~20–24 °C
+234|5|Процедура горчичников показана при:|*гипертоническом кризе~*боли в сердце (приступе стенокардии)~*заболевании мышц и дыхательных путей (трахеит, бронхит, пневмония)~аллергических состояниях
+235|5|Противопоказания для применения горчичников:|*Высокая температура тела (гипертермия, субфебрилитет)~*Злокачественные новообразования (опухоли)~*Снижение кожной чувствительности или заболевания кожи~*Кровотечения и туберкулёз лёгких~Остеохондроз и миозит
+236|5|Назовите места постановки медицинских банок:|*Межлопаточная область~*Подлопаточная область~Область сердца~Надлопаточная область и позвоночник
+237|5|Перед постановкой банок на кожу пациента наносят крем (вазелин) с целью:|*смягчения~*герметичности~согревания~обеззараживания
+238|5|Банки применяют в лечении:|*радикулита~*миозита~*пневмонии~туберкулёза лёгких
+239|5|Противопоказания к применению банок:|*Заболевания кожи, органов кроветворения~*Лёгочные и др. кровотечения~*Туберкулёз лёгких, лихорадка~Невралгии, миозиты
+240|5|Лечебный эффект гирудотерапии выражен в:|*Снижении свёртываемости крови~Уменьшении мышечной массы~Повышении свёртываемости крови~Повышении артериального давления
+241|5|Осуществление оксигенотерапии через носовой катетер показано при:|*гипоксии~*одышке~гипертермии без дыхательной недостаточности~язвенной болезни желудка
+242|5|Повреждения кислородного шланга заклеивать лейкопластырем:|*Запрещается~Значения не имеет~Допускается~Рекомендуется
+243|5|Размещение кислородного баллона рядом с электророзетками по технике безопасности:|*Запрещается~Рекомендуется~Допускается~Значения не имеет
+244|5|Ячейки противопролежневого матраса заполнены:|*воздухом~горячей водой~кварцевым песком~парафином
+245|5|Факторы риска развития пролежней:|*травмы кожных покровов~*отсутствие сознания у пациента~*сахарный диабет~мужской пол
+246|5|Образованию пролежней способствует:|*Сдавление тканей при длительном лежачем положении пациента~Активное положение пациента в постели~Регулярная смена белья~Ежедневное умывание
+247|5|Образованию пролежней у пациента в положении лёжа на спине наиболее подвержена зона:|*Крестца~Предплечья~Передней поверхности грудной клетки~Височной области
+248|5|Первым признаком появления пролежней является:|*участок стойкой неисчезающей гиперемии~глубокая трофическая язва~некроз мышечной ткани~обнажение кости
+249|5|Оцените стадию пролежня, если наблюдается стойкое покраснение (гиперемия), но кожа цела:|*I стадия~II стадия~III стадия~IV стадия
+250|5|Признаки 3-й стадии пролежней:|*Некроз кожи и подкожной клетчатки (глубокая язва)~Покраснение кожи с синюшным оттенком без дефекта~Поверхностное шелушение эпидермиса~Мацерация кожи
+251|5|Оцените стадию пролежня при наличии глубокой язвы с повреждением кожи и подкожной клетчатки:|*пролежень 3 стадии~пролежень 1 стадии~пролежень 2 стадии~пролежень 4 стадии
+252|5|Для профилактики пролежней положение пациента в постели по стандарту меняют:|*Каждые 2 часа~Каждые 6 часов~1 раз в сутки~Каждые 12 часов
+253|5|К профилактике развития пролежней относится:|*Смена положения тела каждые два часа~Смена положения тела 2 раза в день~Умывание холодной водой~Интенсивная лечебная физкультура
+254|5|Для профилактики пролежней необходимо:|*Подкладные круги (валики), массаж вокруг зон риска, туалет кожи, по возможности изменение положения тела~Создать максимально возможное неподвижное положение больного~Обрабатывать кожу 96% этиловым спиртом~Использовать жёсткий щит без матраса
+255|5|Обработку кожи для профилактики пролежней производят:|*10% камфорным спиртом~96% этанолом~10% нашатырным спиртом~3% перекисью водорода
+256|5|Лекарственные препараты, применяемые для местного лечения пролежней (ускорения эпителизации):|*Солкосерил, алазоль, пантенол~Алмагель, фестал, мезим~Бензилбензоат, мазь Бом-Бенге~Оксолиновая мазь, горчичники
+257|5|Защитным препаратом для обработки кожи вокруг стомы является:|*Паста Лассара~Мазь «Левомеколь»~Мазь Флеминга~Линимент Вишневского
+258|5|Цистостомой называется искусственный наружный свищ:|*Мочевого пузыря~Желудка~Толстого кишечника~Тонкого кишечника
+259|6|К наружному способу относится введение лекарственных средств:|*На кожу и на слизистые оболочки~Через прямую кишку~В полость сустава~Под язык (сублингвально)
+260|6|Основной путь введения лекарственных препаратов при бронхиальной астме:|*Ингаляционный~Внутримышечный~Сублингвальный~Через рот
+261|6|Карманный ингалятор применяют пациенты с:|*Бронхиальной астмой~Ринитом~Гайморитом~Отитом
+262|6|Устройство для введения в организм лекарственных средств аэрозольным способом:|*Небулайзер (ингалятор)~Мешок Амбу~Носовая канюля~Кислородная лицевая маска
+263|6|Эффект действия нитроглицерина под язык наступает через:|*1–2 мин~10–15 мин~20–25 мин~15–20 мин
+264|6|Для уменьшения побочных эффектов ацетилсалициловую кислоту рекомендуется принимать:|*После еды~Строго натощак за 1 час до еды~Запивая небольшим количеством крепкого чая~Не запивая водой
+265|6|Ферментативные препараты (мезим, фестал) принимают:|*Во время еды~Независимо от приёма пищи~Спустя 2–3 часа после еды~Строго натощак
+266|6|Антибиотики назначают при:|*Бактериальной инфекции~Вирусной инфекции (гриппе)~Любом сухом кашле~Неинфекционной лихорадке
+267|6|Наблюдение за пациентом после постановки пробы на переносимость антибиотиков продолжается:|*До 30 минут~В течение 2–3 минут~В течение 5–10 минут~Не менее 2 суток
+268|6|Наиболее частые осложнения при приёме кортикостероидов внутрь:|*отёки, повышение АД, образование язв в желудке, повышение уровня сахара в крови~аритмии и брадикардия~аллергические реакции, кожный зуд~обезвоживание, сгущение крови
+269|6|Угол наклона иглы при внутрикожной инъекции (в градусах):|*5~90~45~60
+270|6|При внутрикожной инъекции игла вводится на глубину:|*Среза иглы~Двух третей иглы~В зависимости от расположения сосуда~Всей длины иглы
+271|6|Местом введения диагностической внутрикожной инъекции является:|*Внутренняя поверхность предплечья~Подлопаточная область~Верхний наружный квадрант ягодицы~Передняя брюшная стенка
+272|6|Инъекционная игла длиной 15 мм и сечением 0,4 мм оптимальна для проведения инъекции:|*Подкожной (и внутрикожной)~Внутривенной~Внутримышечной~Внутрикостной
+273|6|Объём раствора, одномоментно вводимого подкожно, не должен превышать:|*2 мл~10 мл~15 мл~7 мл
+274|6|Осложнение подкожной инъекции при нарушении асептики:|*Флегмона~Флебит~Воздушная эмболия~Масляная эмболия
+275|6|Осложнение, возникающее при подкожном введении инсулина в одно и то же место:|*постинсулиновая липодистрофия~масляная эмболия~тромбофлебит~воздушная эмболия
+276|6|При введении инсулина необходимо:|*Постоянно менять места инъекций~Ввести иглу параллельно поверхности кожи на срез~Не дожидаться полного испарения спирта~Поесть только через 3 часа после инъекции
+277|6|Шприц-ручка используется для:|*подкожного введения инсулина~кормления тяжелобольных через зонд~промывания полостей и свищей~внутривенного струйного введения хлорида кальция
+278|6|Осложнение, развивающееся при передозировке инсулина:|*гипогликемическая кома~гипергликемическая кома~уремическая кома~печёночная кома
+279|6|При диабетической (гипергликемической) коме пациенту вводят инсулин:|*короткого действия~пролонгированного (длительного) действия~средней продолжительности действия~комбинированный в таблетках
+280|6|Наиболее часто гепарин вводят в подкожную клетчатку:|*живота (переднебоковой стенки)~внутренней поверхности предплечья~тыльной стороны кисти~икроножной мышцы
+281|6|Игла при внутримышечной инъекции вводится под углом (в градусах):|*90~45~60~5
+282|6|Максимальный объём препаратов, вводимый внутримышечно в одно место, не превышает:|*5 мл~10 мл~15 мл~20 мл
+283|6|Стерильный масляный раствор перед инъекцией подогревают до (градусов):|*38~40~14~28
+284|6|Изменения на конечности при правильном наложении венозного жгута:|*Пульс сохранён, конечность тёплая, отёчная, цианотичная~Пульс слабый, конечность бледная, неотёчная~Пульс сохранён, конечность обычной окраски, вены спавшиеся~Пульс не определяется ниже жгута, конечность бледная, холодная
+285|6|При струйном способе одномоментно внутривенно шприцем можно ввести:|*до 20 мл~50 мл~до 500 мл~2000 мл
+286|6|Внутривенно струйно при неотложных состояниях можно вводить раствор:|*Трисоль (и Реополиглюкин)~Масляный раствор камфоры~Суспензию гидрокортизона~Эмульсию для энтерального питания
+287|6|Пути введения 10% раствора хлористого кальция:|*внутривенно~внутримышечно~подкожно~внутрикожно
+288|6|При попадании какого препарата под кожу или в мышцу развивается некроз тканей:|*Хлорида кальция~Хлорида натрия 0,9%~Глюконата кальция~Сульфата магния
+289|6|Требование в аптеку на получение этилового спирта заверяется:|*главным врачом (руководителем медицинской организации)~постовой медицинской сестрой~процедурной медицинской сестрой~сестрой-хозяйкой
+290|6|Лекарственные средства, входящие в список А и Б, хранят:|*раздельно в сейфе и в шкафу под замком~в холодильнике на общей полке~в открытых стеклянных шкафах в процедурном кабинете~на посту медицинской сестры на видном месте
+291|6|Все листы журнала учёта наркотических препаратов должны быть:|*пронумерованы, прошнурованы, опломбированы (скреплены печатью) и заверены подписью руководителя учреждения~заверены только подписью главной медсестры~просто пронумерованы карандашом~прошнурованы и заверены подписью постовой медсестры
+292|6|В специально прошнурованном журнале с пронумерованными страницами и печатью руководителя производится предметно-количественный учёт:|*наркотических средств и психотропных веществ~витаминных препаратов~жаропонижающих средств~перевязочного материала
+293|6|В журнале регистрации операций, связанных с оборотом наркотических средств и психотропных веществ, при выдаче пациенту необходимо указать:|*Фамилию, имя, отчество пациента и номер истории болезни~Клинический диагноз болезни пациента~Паспортные данные родственников~Группу крови пациента
+294|6|Введение наркотического анальгетика врач обязан письменно обосновать в:|*истории болезни (медицинской карте стационарного больного)~температурном листе~порционном требовании~журнале приёма и передачи дежурств
+295|6|Запись о фактическом введении пациенту лекарственного препарата наркотического действия необходимо сделать в:|*журнале регистрации операций, связанных с оборотом НС и ПВ, а также в истории болезни~только в температурном листе~только в журнале учёта процедур~в статистической карте выбывшего из стационара
+296|6|При введении наркотических средств медсестра должна:|*Вскрыть ампулу и ввести пациенту наркотический анальгетик только после записи этого назначения врачом в медицинскую карту и в присутствии врача~*Пустые ампулы из-под наркотических лекарственных средств сдать/оставить в сейфе для комиссии~самостоятельно уничтожить пустую ампулу в раковине~оставить запас ампул пациенту на тумбочке
+297|6|Ампулы с не полностью использованными наркотическими и психотропными лекарственными препаратами нужно:|*Сдать ответственному лицу~Оставить дома у пациента~Выбросить в контейнер класса А~Сдать хирургу-онкологу
+298|6|Уничтожение использованных ампул наркотических препаратов в стационарных условиях проводится:|*Специальной комиссией, с составлением акта~Процедурной медсестрой единолично в конце смены~Санитаркой при выносе мусора~Палатной медсестрой сразу после инъекции
+299|6|Что будет приоритетной проблемой пациента при анафилактическом шоке:|*снижение артериального давления~зудящая сыпь на коже~учащённое дыхание~бледность кожных покровов
+300|6|Неотложная помощь при анафилактическом шоке начинает оказываться:|*На месте развития~В процедурном кабинете после транспортировки~В отделении реанимации~В палате интенсивной терапии
+301|6|При анафилактическом шоке, вызванном внутривенным капельным введением лекарств, главным первым действием является:|*Перекрыть капельницу, сохранив доступ в вену~Пероральный приём антигистаминных препаратов~Создание психического покоя~Полностью извлечь иглу из вены и снять капельницу
+302|6|При желудочном кровотечении необходимо пациенту:|*Положить пузырь со льдом на живот~Промыть желудок толстым зондом~Положить тёплую грелку на живот~Поставить масляную клизму
+303|6|Какие заболевания лёгких могут сопровождаться лёгочным кровотечением:|*Рак лёгкого~*Бронхоэктатическая болезнь~Острый бронхит~Бронхиальная астма
+304|6|Эмболия, развивающаяся при ранении крупных вен шеи и грудной клетки:|*Воздушная~Тканевая~Жировая~Газовая
+305|6|Нормальная частота сердечных сокращений у взрослого в покое (в учебном ключе):|*60–80 в минуту~100–120 в минуту~До 60 в минуту~90–100 в минуту
+306|6|Какое название имеет урежение пульса меньше 60 ударов в минуту:|*брадикардия~гипотония~тахикардия~экстрасистолия
+307|6|Дефицит пульса — это:|*пульс реже числа сердечных сокращений~пульс 70–60 ударов в минуту~пульс 80–70 ударов в минуту~пульс реже 60 ударов в минуту
+308|6|Что такое урежение дыхания:|*брадипноэ~тахипноэ~апноэ~диспноэ
+309|6|В состоянии агонии дыхание:|*Редкое судорожное~Отсутствует~Редкое глубокое ровное~Частое поверхностное
+310|6|Продолжительность клинической смерти в обычных условиях:|*4–6 мин~1–2 мин~более 20 мин~10–12 мин
+311|6|Основными признаками остановки сердца являются:|*Широкие зрачки и отсутствие пульса на сонной артерии~Только отсутствие сознания~Клонические судороги~Узкие зрачки и гиперемия лица
+312|6|Признаки клинической смерти (1 ответ):|*Потеря сознания, отсутствие дыхания и отсутствие пульса на сонной артерии~Заторможенность и снижение АД~Спутанность сознания и нитевидный пульс~Помутнение роговицы и трупное окоченение
+313|6|Тремя главными признаками клинической смерти являются:|*Отсутствие пульса на сонной артерии~*Отсутствие дыхания~*Отсутствие сознания~Отсутствие пульса на лучевой артерии~Появление трупных пятен
+314|6|К признакам клинической смерти относится:|*Отсутствие дыхания~*Отсутствие сердцебиения (пульса на сонной артерии)~*Отсутствие сознания~Появление трупных пятен
+315|6|Для наступившей смерти НЕ характерно:|*самостоятельное (неадекватное) дыхание~отсутствие сознания~отсутствие пульса на сонной артерии~расширение зрачков без реакции на свет
+316|6|Необратимым этапом умирания организма является:|*Биологическая смерть~Агония~Клиническая смерть~Преагония
+317|6|Ранний достоверный признак биологической смерти:|*Симптом деформации зрачка («кошачий глаз»)~Расширение зрачка~Прекращение дыхания~Прекращение сердечной деятельности
+318|6|Достоверным признаком биологической смерти является симптом:|*Появления трупных пятен~Прекращения сердечной деятельности~Снижения температуры кожи ниже 35 °C~Прекращения дыхания
+319|6|Симптомами биологической смерти являются:|*Помутнение роговицы~*Трупное окоченение (и трупные пятна)~Отсутствие пульса на лучевой артерии~Цианоз губ
+320|6|Наступление биологической смерти пациента констатирует:|*Врач~Старшая медсестра~Постовая медсестра~Процедурная медсестра
+321|6|При определении момента смерти человека, отказе от применения или прекращении реанимационных мероприятий следует руководствоваться:|*Инструкцией (правилами) Минздрава РФ по определению критериев и порядка определения момента смерти человека~Устным распоряжением старшей медсестры~Пожеланиями родственников пациента~Правилами внутреннего трудового распорядка
+322|6|Электрокардиография — это:|*Графическая запись электрических явлений, возникающих при работе сердца~Исследование сердца при помощи ультразвука~Выслушивание сердца при помощи фонендоскопа~Графическая запись звуков, возникающих при работе сердца
+323|6|Для диагностики рака лёгкого в первую очередь применяется:|*Рентгенография органов грудной клетки~Спирография~Электрокардиография~Эхокардиография
+324|6|К рентгенологическому методу диагностики относится:|*Компьютерная томография~Ультразвуковое исследование~Электрокардиография~Спирография
+325|6|К рентгенологическим методам исследования органов дыхания относятся:|*Бронхография, томография, флюорография~УЗИ, бронхоскопия~Холецистография, ирригоскопия, гастроскопия~Спирография, пневмотахометрия, пикфлоуметрия
+326|6|Эзофагогастродуоденоскоп используется для осмотра слизистой оболочки:|*Пищевода, желудка, двенадцатиперстной кишки~Прямой кишки~Мочевого пузыря~Толстой кишки
+327|7|Гастростома — искусственный наружный свищ:|*Желудка~Кишечника~Трахеи~Мочевого пузыря
+328|7|Илеостомой называется искусственный наружный свищ:|*Тонкого кишечника~Почки~Желудка~Толстого кишечника
+329|7|Элементом независимого сестринского ухода при рвоте является:|*Обработка полости рта~Обильное щелочное питьё~Промывание желудка зондом~Дача препарата с противорвотным действием
+330|7|Показание для промывания желудка:|*острое отравление (отравление ядами)~острый аппендицит~запор~острое желудочное кровотечение
+331|7|При пищевом отравлении необходимо:|*Промыть желудок~Поставить масляную клизму~Положить грелку на живот~Провести дуоденальное зондирование
+332|7|Для промывания желудка при пищевом отравлении применяется зонд:|*толстый~эндоскопический~дуоденальный~тонкий
+333|7|Количество чистой воды, необходимое для промывания желудка взрослому человеку:|*10–12 литров (10 л)~0,5 литра~3–4 литра~1 литр
+334|7|При промывании желудка первую порцию промывных вод отправляют в:|*Лабораторию~Отделение функциональной диагностики~Патологоанатомическое отделение~Приёмное отделение
+335|7|При появлении цианоза, кашля во время введения желудочного зонда необходимо:|*Немедленно извлечь зонд~Временно прекратить введение зонда~Начать искусственную вентиляцию лёгких~Вызвать врача, оставив зонд
+336|7|Для кормления тяжелобольных пациентов через назогастральный зонд используют шприц:|*Жане~Инъекционный 5 мл~Шприц-ручку~Тюбик
+337|7|При кормлении тяжелобольного пациента через зонд пищу подогревают до (градусов по Цельсию):|*38–40~15–20~25–30~45–50
+338|7|При дуоденальном зондировании пациента укладывают на:|*правый бок~живот~левый бок~спину
+339|7|При проведении фракционного дуоденального зондирования получают три основные порции (фракции):|*порция А — дуоденальное содержимое (сок 12-перстной кишки, поджелудочной железы, желчь); порция В — пузырная желчь; порция С — желчь из печёночных протоков~порция А — желудочный сок; порция В — слюна; порция С — панкреатический сок~порция А — печёночная желчь; порция В — желудочный сок; порция С — пузырная желчь~три одинаковые порции желудочного содержимого
+340|7|Порция «В» при дуоденальном зондировании — это:|*Содержимое желчного пузыря (пузырная желчь)~Содержимое желудка~Желчь из печёночных протоков~Содержимое 12-перстной кишки
+341|7|При подготовке к дуоденальному зондированию очистительная клизма:|*не ставится~ставится вечером и утром~ставится утром за 1 час~ставится дважды утром
+342|7|Показанием для введения газоотводной трубки является:|*метеоризм~острый аппендицит~кишечное кровотечение~выпадение прямой кишки
+343|7|Газоотводная трубка вводится на глубину:|*25–30 см на 1 час~15–20 см на 15–20 минут~25–30 см на всю ночь~10–15 см на 1 час
+344|7|Для постановки очистительной клизмы пациента укладывают на:|*левый бок с приведёнными к животу коленями~правый бок с выпрямленными ногами~живот~спину с валиком под шеей
+345|7|Кружку Эсмарха применяют для постановки:|*Очистительной клизмы~Сифонной клизмы~Лекарственной микроклизмы~Масляной клизмы
+346|7|Для постановки очистительной клизмы надо подготовить:|*кружку Эсмарха~*1–1,5 л чистой воды~100 мл 10% раствора натрия хлорида~грушевидный баллон и газоотводную трубку~зонд с воронкой и 10 л чистой воды
+347|7|Противопоказанием для постановки очистительной клизмы является:|*кишечное кровотечение~атонический запор~спастический запор~подготовка к рентгенографии кишечника
+348|7|Температура воды для очистительной клизмы при спастическом запоре составляет (°C):|*38–42~25–30~5–10~15–20
+349|7|Температура воды для очистительной клизмы при атоническом запоре составляет (°C):|*15–20~38–42~5–10~45–50
+350|7|Время постановки очистительной клизмы перед плановыми операциями:|*вечером накануне операции~клизма не ставится~утром за 10 минут до операции~за 3 суток до операции
+351|7|Больному с запорами можно сделать клизму:|*Сифонную~*Обычную очистительную~*Масляную~Питательную капельную
+352|7|Вещества, применяемые для послабляющей клизмы:|*20–30% раствор сульфата магния (в тесте опечатка: AgSO4)~*Вазелиновое масло~*Облепиховое масло~*10% раствор натрия хлорида (NaCl)
+353|7|Количество растительного (или вазелинового) масла, которое используется для постановки масляной клизмы (в мл):|*50–100 (до 150–200 мл)~500~1000~10
+354|7|Кишечник после масляной клизмы опорожняется через (час.):|*10–12~2~6–8~4
+355|7|При постановке гипертонической клизмы готовят раствор хлорида натрия:|*10%~0,9%~20%~2%
+356|7|Перечень изделий и препаратов для гипертонической клизмы:|*Грушевидный баллон, газоотводная трубка, вазелин, 10% NaCl~Грушевидный баллон, газоотводная трубка, вазелин, 0,9% NaCl~Кружка Эсмарха, шприц Жане, вазелин, 0,9% NaCl~Грушевидный баллон, газоотводная трубка, вазелиновое масло, 0,9% NaCl
+357|7|Объём раствора для лекарственной микроклизмы:|*50–100 мл~100–150 мл~200–250 мл~150–200 мл
+358|7|Условия постановки лекарственной клизмы:|*объём 50–100 мл, температура 38–40 °C, через 30 минут после очистительной клизмы~объём 1–1,5 л, температура 15–20 °C, без предварительной очистки~объём 500 мл, температура 20–24 °C, одновременно с сифонной клизмой~объём 10–12 л, температура 37 °C, через толстый зонд
+359|7|Раствор глюкозы, вводимый при постановке капельной питательной клизмы:|*5%~40%~0,9%~20%
+360|7|Капельные питательные клизмы сейчас делают очень редко, так как:|*можно эффективно вводить жидкости парентерально (внутривенно)~они требуют использования 10 литров воды~для них необходим общий наркоз~глюкоза разрушается при температуре тела
+361|7|Показанием для сифонной клизмы является:|*Выведение из кишечника токсических веществ~Подготовка к физиологическим родам~Появление периферических отёков~Острое желудочное кровотечение
+362|7|Сифонная клизма применяется при неопухолевой обтурационной кишечной непроходимости для:|*Терапии состояния обтурации (запора)~Введения питательных веществ~Перед постановкой масляной клизмы~Остановки кишечного кровотечения
+363|7|Объём воды для сифонной клизмы составляет:|*10–12 л~1–1,5 л~50–100 мл~300–500 мл
+364|7|Глубина введения зонда при постановке сифонной клизмы:|*30–40 см~15–20 см~8–10 см~12–15 см
+365|7|Кратность промывания кишечника при сифонной клизме:|*до чистых промывных вод~строго однократно~не более 2 раз~до появления болевого синдрома
+366|7|Для проведения катетеризации мочевого пузыря используются перчатки:|*стерильные~нестерильные смотровые~хозяйственные резиновые~кольчужные
+367|7|Уретральный катетер перед введением в мочевой пузырь необходимо смочить:|*Стерильным глицерином (или стерильным вазелиновым маслом)~70% раствором этилового спирта~3% раствором перекиси водорода~Раствором фурацилина
+368|7|В качестве антисептического раствора для промывания мочевого пузыря используют:|*0,05% водный раствор хлоргексидина (или 0,02% р-р фурацилина)~3% р-р перекиси водорода~70% этиловый спирт~10% раствор натрия хлорида
+369|7|Наиболее частым осложнением катетеризации мочевого пузыря при нарушении асептики является:|*инфицирование мочевыводящих путей~острая почечная колика~выпадение прямой кишки~недержание кала
+370|7|При заболеваниях, не требующих назначения специальной диеты, рекомендуется диета №:|*15~13~11~10
+371|7|Сорбит, ксилит и другие заменители сахара назначаются при диете №:|*9~5~7~1
+372|7|Диета при гипертонической болезни предполагает:|*Ограничение жидкости и соли~Увеличение жиров и белков~Ограничение только белков~Увеличение жидкости и соли
+373|7|При заболеваниях сердечно-сосудистой системы применяется диета с ограничением:|*жирных и солёных блюд, а также свободной жидкости~молочных и растительных продуктов~белковых блюд и витаминов~фруктов и ягод
+374|7|При наличии у пациента с заболеванием сердца отёков медицинская сестра порекомендует:|*ограничить приём жидкости и соли~увеличить приём минеральной воды до 3 л~употреблять солёную и острую пищу~полностью исключить белки
+375|7|В рационе питания пациента с атеросклерозом предпочтительны:|*Растительные жиры~Тугоплавкие животные жиры (бараний, свиной)~Сливочное масло и маргарин~Продукты, богатые холестерином
+376|7|Диета при холецистопанкреатите предполагает:|*Ограничение жиров и углеводов~Ограничение жидкости и соли~Увеличение потребления животных жиров~Увеличение потребления острых и жареных блюд
+377|7|При хроническом гастрите из рациона питания исключают:|*жирные, жареные, острые блюда и мясные блюда из свинины и баранины~отварные овощи и слизистые супы~молочные каши и кисели~паровые котлеты из нежирной рыбы
+378|7|При составлении пищевого рациона больному язвенной болезнью желудка рекомендуется:|*Механически и химически щадящее питание~Грубая растительная клетчатка~Ежедневные голодные разгрузочные дни~Острые мясные бульоны и специи
+379|7|Диета пациента при пиелонефрите предусматривает:|*Исключение экстрактивных, острых и пряных блюд~Резкое ограничение жидкости до 300 мл~Преобладание копчёностей и маринадов~Полное исключение углеводов
+380|7|Рекомендация медицинской сестры при запоре (для усиления перистальтики кишечника) — употребление:|*Продуктов с пищевыми волокнами, растительной клетчаткой (овощей, фруктов) и кисломолочных продуктов~Тугоплавких животных жиров~Крепкого горячего чая и какао~Слизистых рисовых отваров и киселей
+381|7|Дефицит белка в рационе питания — причина появления:|*Отёков~Повышения работоспособности~Гипервитаминоза~Повышения свёртываемости крови
+382|7|Причины железодефицитной анемии:|*повторные желудочно-кишечные кровотечения~употребление острой, солёной пищи~чрезмерное употребление мясной пищи~избыточное пребывание на солнце
+383|7|Для удовлетворения потребностей человека в микронутриентах (витаминах и минералах) целесообразно использовать:|*Натуральные продукты, сбалансированные по составу~Рацион с повышенным содержанием животных жиров~Только синтетические заменители пищи~Рафинированные простые углеводы
+384|7|Водорастворимый витамин:|*C~A~D~E
+385|7|Причина кровоточивости дёсен — недостаток витамина:|*C~B1~A~D
+386|7|Продукт, содержащий наибольшее количество витамина D:|*Рыбий жир~Морковь~Шпинат~Гречневая крупа
+387|7|Суточным диурезом называется:|*Общее количество мочи, выделенной пациентом в течение суток~Соотношение между количеством введённой жидкости и количеством выделенной жидкости за сутки~Общее количество введённой в организм жидкости за сутки~Процесс образования первичной мочи в нефронах
+388|7|Водный баланс — это:|*Соотношение потреблённой за сутки жидкости и суточного диуреза~Преобладание дневного диуреза над ночным~Равенство дневного и ночного диуреза~Преобладание ночного диуреза над дневным
+389|7|У здорового человека с мочой выделяется от выпитой за сутки жидкости:|*70–80%~20–30%~100%~40–50%
+390|7|Мочу на общий клинический анализ доставляют в лабораторию:|*клиническую~вирусологическую~иммунологическую~бактериологическую
+391|7|Что находится в моче, имеющей вид «мясных помоев»:|*Много эритроцитов~Много солей уратов~Много бактерий~Много лейкоцитов
+392|7|Цель исследования мочи по Нечипоренко — определение в 1 мл мочи:|*Количества форменных элементов осадка мочи (лейкоцитов и эритроцитов)~Функционального состояния почек и плотности~Микрофлоры мочи и чувствительности к антибиотикам~Суточного диуреза
+393|7|Для исследования мочи по Нечипоренко собирается моча:|*Из средней порции одного утреннего мочеиспускания сразу после сна в количестве 10–20 мл~Вся порция первого мочеиспускания после ночи~За 24 часа в одну большую ёмкость~В течение суток каждые 3 часа в 8 банок
+394|7|Цель исследования мочи по Зимницкому:|*Определение функционального состояния почек~Определение микрофлоры мочи~Определение количества форменных элементов в 1 мл~Определение суточной глюкозурии
+395|7|Пробой Зимницкого при заболеваниях почек в моче определяют:|*Относительную плотность мочи и диурез~Количество сахара и ацетона~Количество форменных элементов и бактерий~Наличие уробилина и желчных пигментов
+396|7|Для определения соотношения между дневным и ночным диурезом назначают анализ мочи по:|*Зимницкому~Ребергу~Аддис-Каковскому~Нечипоренко
+397|7|Анализ мочи на суточную глюкозурию собирается в:|*Течение суток в одну ёмкость~Стерильную пробирку из средней порции~Течение 10 часов в одну ёмкость~Течение суток, в 8 банок, каждые 3 часа
+398|7|Глюкотест используется для определения:|*сахара в моче~ацетона в крови~ацетона в моче~сахара в крови
+399|7|Глюкометр используется для измерения уровня:|*глюкозы в крови~глюкозы в пищевых продуктах~кетоновых тел в моче~глюкозы в моче
+400|7|Для лабораторного определения уровня глюкозы в венозной крови медсестра оформляет направление в лабораторию:|*биохимическую~бактериологическую~цитологическую~вирусологическую
+401|7|Правила забора крови на биохимическое исследование:|*утром, натощак~*из вены~из пальца~в любое время суток после еды
+402|7|Неформенные элементы (биохимические компоненты) крови:|*креатинин~эритроциты~лейкоциты~лимфоциты
+403|7|При сборе мокроты на общий анализ пациента необходимо обеспечить:|*Сухой чистой банкой~Стерильной чашкой Петри с питательной средой~Стерильной пробиркой с консервантом~Сухой центрифужной пробиркой
+404|7|Для диагностики острых кишечных инфекций чаще исследуют:|*Кал~Желчь~Кровь из пальца~Мочу по Зимницкому
+405|7|При подозрении на кишечное кровотечение кал на скрытую кровь отправляют в лабораторию:|*клиническую~бактериологическую~иммунологическую~цитологическую
+406|7|Лаборатория для исследования кала на яйца гельминтов и простейших:|*клиническая~бактериологическая~радиоизотопной диагностики~иммунологическая
+407|7|При исследовании кала на копрологию:|*кал на анализ берут из разных мест каловых масс при обычном рационе (или с ограничением примесей)~собирают кал только после масляной клизмы~требуют 3-дневного полного голодания~доставляют материал в термостате при +45 °C
+408|7|У девочки 5 лет ухудшился сон, стала раздражительной, появился зуд в заднем проходе, недержание мочи. О какой глистной инвазии можно подумать:|*энтеробиоз~трихоцефалёз (власоглав)~аскаридоз~дифиллоботриоз (широкий лентец)
+409|7|Инструментальный метод исследования, позволяющий диагностировать варикозно расширенные геморроидальные вены и осмотреть прямую кишку:|*ректороманоскопия~эзофагогастродуоденоскопия~бронхоскопия~цистоскопия
+410|7|Эндоскопический осмотр слизистой оболочки всего толстого кишечника — это:|*колоноскопия~эзофагоскопия~дуоденоскопия~гастроскопия
+411|7|При подготовке пациента к ректороманоскопии, колоноскопии или ирригоскопии медицинская сестра должна выполнить назначение:|*Очистительную клизму вечером накануне и утром за 2 часа до исследования~Масляную клизму за 30 минут до исследования~Питательную клизму вечером~Катетеризацию мочевого пузыря
+412|7|За три дня до проведения ультразвукового исследования органов брюшной полости из рациона питания пациента необходимо исключить:|*Молоко, овощи, фрукты, чёрный хлеб~Гречневую кашу, помидоры, гранаты~Мясо, рыбу, консервы~Яйца, белый хлеб, сладости
+413|7|Для проведения трансабдоминального УЗИ органов малого таза необходимо, чтобы мочевой пузырь пациента был:|*Наполнен~Опорожнён катетером~Промыт раствором антисептика~Охлаждён пузырём со льдом
+414|7|При подготовке к радиоизотопному исследованию щитовидной железы необходимо:|*Исключить применение препаратов йода и брома~Проводить профилактику метеоризма~Исключить применение препаратов железа и висмута~Очистить кишечник сифонной клизмой
+`.trim();
+
+        // Парсинг всех 414 вопросов со своими собственными вариантами ответа
+        const ALL_QUESTIONS = RAW_QUESTIONS_DATA.split('\n').map(line => {
+            const parts = line.trim().split('|');
+            const id = parseInt(parts[0], 10);
+            const blockId = parseInt(parts[1], 10);
+            const qText = parts[2].trim();
+            const rawOptsStr = parts[3].trim();
+
+            const rawOpts = rawOptsStr.split('~').map(s => s.trim()).filter(Boolean);
+            const parsedOpts = [];
+            const correctTexts = [];
+
+            rawOpts.forEach(optStr => {
+                if (optStr.startsWith('*')) {
+                    const cleanText = optStr.substring(1).trim();
+                    parsedOpts.push({ text: cleanText, isCorrect: true });
+                    correctTexts.push(cleanText);
+                } else {
+                    parsedOpts.push({ text: optStr, isCorrect: false });
+                }
+            });
+
+            const isMulti = correctTexts.length > 1;
+            const answerDisplay = correctTexts.join('; ');
+            const blockObj = BLOCKS.find(b => b.id === blockId);
+
+            return {
+                id,
+                blockId,
+                blockName: blockObj ? blockObj.name : `Блок ${blockId}`,
+                question: qText,
+                answer: answerDisplay,
+                options: parsedOpts,
+                isMulti
+            };
+        });
+
+        // Состояние приложения
+        const STORAGE_KEY = 'spo_nursing_414_authentic_v5';
+        let progressMap = {}; // { [id]: 'known' | 'review' }
+        let currentMode = 'flashcards'; // 'flashcards' | 'quiz' | 'exam' | 'list'
+        let activeBlock = 'all'; // 'all' or 1..7
+        let activeStatus = 'all'; // 'all' | 'review' | 'unseen' | 'known' | 'multi'
+        let searchQuery = '';
+
+        let filteredQuestions = [...ALL_QUESTIONS];
+        let fcIndex = 0;
+        let isCardFlipped = false;
+
+        // Состояние для тестового тренажёра (Режим 2)
+        let quizIndex = 0;
+        let quizAnswered = false;
+        let quizCurrentOptions = [];
+        let quizMultiSelection = new Set();
+        let quizCorrectCount = 0;
+        let quizTotalAnswered = 0;
+
+        // ==================== СОСТОЯНИЕ ЭКЗАМЕНА (80 ВОПРОСОВ / 60 МИНУТ) ====================
+        let examQuestions = [];
+        let examCurrentIdx = 0;
+        let examUserAnswers = {}; // Для single: number; для multi: array of indices [0, 2]
+        let examMultiConfirmed = {}; // Для обучающего режима экзамена с несколькими ответами
+        let examFlagged = {};
+        let examModeType = 'strict';
+        let examTimeLeft = 60 * 60;
+        let examTotalSecondsSpent = 0;
+        let examTimerInterval = null;
+        let examIsPaused = false;
+        let examIsActive = false;
+        let examReviewFilter = 'mistakes';
+
+        const QUIZ_STATS_KEY = 'spo_nursing_414_quiz_stats_v5';
+
+        function updateQuizScoreUI() {
+            const el = document.getElementById('quiz-score');
+            if (!el) return;
+            const pct = quizTotalAnswered > 0 ? Math.round((quizCorrectCount / quizTotalAnswered) * 100) : 0;
+            el.textContent = `Верно: ${quizCorrectCount} / ${quizTotalAnswered} (${pct}%)`;
+        }
+
+        // Загрузка сохраненного прогресса из localStorage
+        function loadProgress() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY) ||
+                              localStorage.getItem('spo_nursing_412_authentic_v4') ||
+                              localStorage.getItem('spo_nursing_398_unified_v3');
+                if (saved) {
+                    progressMap = JSON.parse(saved);
+                }
+                const savedQuiz = localStorage.getItem(QUIZ_STATS_KEY);
+                if (savedQuiz) {
+                    const parsedQuiz = JSON.parse(savedQuiz);
+                    quizCorrectCount = parsedQuiz.correct || 0;
+                    quizTotalAnswered = parsedQuiz.total || 0;
+                }
+            } catch (e) {
+                progressMap = {};
+                quizCorrectCount = 0;
+                quizTotalAnswered = 0;
+            }
+            updateQuizScoreUI();
+
+            // Сохранение обнуления только при нажатии кнопок сброса
+            const btnQuizReset = document.getElementById('btn-quiz-reset-score');
+            if (btnQuizReset && !btnQuizReset.dataset.boundSave) {
+                btnQuizReset.dataset.boundSave = 'true';
+                btnQuizReset.addEventListener('click', () => {
+                    quizCorrectCount = 0;
+                    quizTotalAnswered = 0;
+                    saveProgress();
+                });
+            }
+
+            const btnConfirmReset = document.getElementById('btn-confirm-reset');
+            if (btnConfirmReset && !btnConfirmReset.dataset.boundSave) {
+                btnConfirmReset.dataset.boundSave = 'true';
+                btnConfirmReset.addEventListener('click', () => {
+                    quizCorrectCount = 0;
+                    quizTotalAnswered = 0;
+                    saveProgress();
+                });
+            }
+        }
+
+        function saveProgress() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(progressMap));
+                localStorage.setItem(QUIZ_STATS_KEY, JSON.stringify({
+                    correct: quizCorrectCount,
+                    total: quizTotalAnswered
+                }));
+            } catch (e) {}
+            updateHeaderStats();
+            updateQuizScoreUI();
+        }
+
+        // Обновление верхней статистики
+        function updateHeaderStats() {
+            const total = ALL_QUESTIONS.length;
+            let known = 0;
+            let review = 0;
+
+            ALL_QUESTIONS.forEach(q => {
+                if (progressMap[q.id] === 'known') known++;
+                else if (progressMap[q.id] === 'review') review++;
+            });
+
+            const elTotal = document.getElementById('stat-total');
+            const elKnown = document.getElementById('stat-known');
+            const elReview = document.getElementById('stat-review');
+            const elBarKnown = document.getElementById('bar-known');
+            const elBarReview = document.getElementById('bar-review');
+            const elProgressLabel = document.getElementById('progress-label');
+
+            if (elTotal) elTotal.textContent = total;
+            if (elKnown) elKnown.textContent = known;
+            if (elReview) elReview.textContent = review;
+
+            const pctKnown = ((known / total) * 100).toFixed(1);
+            const pctReview = ((review / total) * 100).toFixed(1);
+
+            if (elBarKnown) elBarKnown.style.width = `${pctKnown}%`;
+            if (elBarReview) elBarReview.style.width = `${pctReview}%`;
+            if (elProgressLabel) {
+                elProgressLabel.textContent = `Прогресс освоения базы: ${Math.round(pctKnown)}% (${known} из ${total} изучено)`;
+            }
+        }
+
+        // Инициализация кнопок фильтрации по блокам
+        function renderBlockButtons() {
+            const container = document.getElementById('block-filters');
+            if (!container) return;
+            let html = `
+                <button data-block="all" class="block-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition ${activeBlock === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                    Все блоки (${ALL_QUESTIONS.length})
+                </button>
+            `;
+
+            BLOCKS.forEach(b => {
+                const count = ALL_QUESTIONS.filter(q => q.blockId === b.id).length;
+                const isActive = activeBlock === b.id;
+                html += `
+                    <button data-block="${b.id}" class="block-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                        ${b.short} (${count})
+                    </button>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            container.querySelectorAll('.block-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const val = btn.getAttribute('data-block');
+                    activeBlock = val === 'all' ? 'all' : parseInt(val, 10);
+                    renderBlockButtons();
+                    applyFilters();
+                });
+            });
+        }
+
+        // Применение всех активных фильтров
+        function applyFilters() {
+            const q = searchQuery.trim().toLowerCase();
+
+            filteredQuestions = ALL_QUESTIONS.filter(item => {
+                if (activeBlock !== 'all' && item.blockId !== activeBlock) return false;
+
+                const status = progressMap[item.id] || 'unseen';
+                if (activeStatus === 'known' && status !== 'known') return false;
+                if (activeStatus === 'review' && status !== 'review') return false;
+                if (activeStatus === 'unseen' && status !== 'unseen') return false;
+                if (activeStatus === 'multi' && !item.isMulti) return false;
+
+                if (q) {
+                    const matchId = item.id.toString() === q || `#${item.id}` === q;
+                    const matchText = item.question.toLowerCase().includes(q) ||
+                                      item.answer.toLowerCase().includes(q) ||
+                                      item.options.some(o => o.text.toLowerCase().includes(q));
+                    if (!matchId && !matchText) return false;
+                }
+
+                return true;
+            });
+
+            const elFilteredCount = document.getElementById('filtered-count-label');
+            if (elFilteredCount) elFilteredCount.textContent = `Выбрано: ${filteredQuestions.length} вопр.`;
+
+            fcIndex = 0;
+            quizIndex = 0;
+            isCardFlipped = false;
+
+            renderActiveView();
+        }
+
+        // Отрисовка текущего выбранного режима
+        function renderActiveView() {
+            const emptyState = document.getElementById('empty-state');
+            const filtersPanel = document.getElementById('global-filters-panel');
+            const viewExam = document.getElementById('view-exam');
+            const viewFc = document.getElementById('view-flashcards');
+            const viewQuiz = document.getElementById('view-quiz');
+            const viewList = document.getElementById('view-list');
+
+            viewExam.classList.add('hidden');
+            viewFc.classList.add('hidden');
+            viewQuiz.classList.add('hidden');
+            viewList.classList.add('hidden');
+
+            if (currentMode === 'exam') {
+                emptyState.classList.add('hidden');
+                filtersPanel.classList.add('hidden');
+                filtersPanel.classList.remove('flex');
+                viewExam.classList.remove('hidden');
+                return;
+            }
+
+            filtersPanel.classList.remove('hidden');
+            filtersPanel.classList.add('flex');
+
+            if (filteredQuestions.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            if (currentMode === 'flashcards') {
+                viewFc.classList.remove('hidden');
+                renderFlashcard();
+            } else if (currentMode === 'quiz') {
+                viewQuiz.classList.remove('hidden');
+                renderQuizQuestion();
+            } else if (currentMode === 'list') {
+                viewList.classList.remove('hidden');
+                renderListView();
+            }
+        }
+
+        // Возвращает перемешанную копию СОБСТВЕННЫХ вариантов ответа вопроса
+        function getShuffledQuestionOptions(item) {
+            return item.options.map(o => ({ text: o.text, isCorrect: o.isCorrect })).sort(() => Math.random() - 0.5);
+        }
+
+        // Проверка правильности ответа (как для 1 ответа, так и для нескольких ответов)
+        function isQuestionAnsweredCorrectly(qItem, userAns) {
+            if (userAns === undefined || userAns === null) return false;
+            if (!qItem.isMulti) {
+                return typeof userAns === 'number' && qItem.options[userAns] && qItem.options[userAns].isCorrect;
+            } else {
+                if (!Array.isArray(userAns) || userAns.length === 0) return false;
+                const correctIndices = qItem.options
+                    .map((o, idx) => o.isCorrect ? idx : -1)
+                    .filter(idx => idx !== -1);
+                if (userAns.length !== correctIndices.length) return false;
+                return correctIndices.every(cIdx => userAns.includes(cIdx));
+            }
+        }
+
+        function hasUserAnsweredQuestion(userAns) {
+            if (userAns === undefined || userAns === null) return false;
+            if (Array.isArray(userAns)) return userAns.length > 0;
+            return true;
+        }
+
+        // ==================== ЛОГИКА РЕЖИМА: ЭКЗАМЕН СПО (80 ВОПРОСОВ / 60 МИНУТ) ====================
+        function startNewExam(customQuestionList = null) {
+            const poolType = document.getElementById('exam-pool-select').value;
+            examModeType = document.getElementById('exam-feedback-select').value;
+
+            let selectedQuestions = [];
+
+            if (customQuestionList && customQuestionList.length > 0) {
+                selectedQuestions = [...customQuestionList];
+            } else if (poolType === 'unlearned') {
+                const priorityPool = ALL_QUESTIONS.filter(q => progressMap[q.id] !== 'known').sort(() => Math.random() - 0.5);
+                const knownPool = ALL_QUESTIONS.filter(q => progressMap[q.id] === 'known').sort(() => Math.random() - 0.5);
+                selectedQuestions = [...priorityPool, ...knownPool].slice(0, 80).sort(() => Math.random() - 0.5);
+            } else {
+                selectedQuestions = [...ALL_QUESTIONS].sort(() => Math.random() - 0.5).slice(0, 80);
+            }
+
+            examQuestions = selectedQuestions.map(q => ({
+                ...q,
+                options: getShuffledQuestionOptions(q)
+            }));
+
+            examCurrentIdx = 0;
+            examUserAnswers = {};
+            examMultiConfirmed = {};
+            examFlagged = {};
+            examTimeLeft = 60 * 60;
+            examTotalSecondsSpent = 0;
+            examIsPaused = false;
+            examIsActive = true;
+
+            document.getElementById('exam-start-screen').classList.add('hidden');
+            document.getElementById('exam-result-screen').classList.add('hidden');
+            document.getElementById('exam-result-screen').classList.remove('flex');
+            const activeScreen = document.getElementById('exam-active-screen');
+            activeScreen.classList.remove('hidden');
+            activeScreen.classList.add('flex');
+
+            startExamTimer();
+            renderExamState();
+        }
+
+        function startExamTimer() {
+            if (examTimerInterval) clearInterval(examTimerInterval);
+            updateExamTimerUI();
+
+            examTimerInterval = setInterval(() => {
+                if (!examIsActive || examIsPaused) return;
+                examTimeLeft--;
+                examTotalSecondsSpent++;
+                updateExamTimerUI();
+
+                if (examTimeLeft <= 0) {
+                    finishExam();
+                }
+            }, 1000);
+        }
+
+        function updateExamTimerUI() {
+            const mins = Math.floor(examTimeLeft / 60);
+            const secs = examTimeLeft % 60;
+            const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            const display = document.getElementById('exam-timer-display');
+            const box = document.getElementById('exam-timer-box');
+            display.textContent = formatted;
+
+            if (examTimeLeft < 300) {
+                box.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-rose-600 text-white font-mono font-bold text-sm sm:text-base animate-pulse';
+            } else {
+                box.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm sm:text-base';
+            }
+        }
+
+        function renderExamState() {
+            const total = examQuestions.length;
+            const currentQ = examQuestions[examCurrentIdx];
+            const answeredCount = examQuestions.filter((_, idx) => hasUserAnsweredQuestion(examUserAnswers[idx])).length;
+
+            document.getElementById('exam-q-counter').textContent = `Вопрос ${examCurrentIdx + 1} из ${total}`;
+            document.getElementById('exam-answered-counter').textContent = `Отвечено: ${answeredCount} / ${total}`;
+            document.getElementById('exam-q-bank-id').textContent = `Вопрос #${currentQ.id}`;
+            document.getElementById('exam-q-block').textContent = `Блок ${currentQ.blockId}: ${currentQ.blockName}`;
+            document.getElementById('exam-q-text').textContent = currentQ.question;
+
+            const instrEl = document.getElementById('exam-q-instruction');
+            if (currentQ.isMulti) {
+                instrEl.textContent = '☑ Выберите несколько правильных ответов';
+                instrEl.className = 'text-xs font-bold text-purple-800 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg w-fit';
+            } else {
+                instrEl.textContent = '🔘 Выберите 1 правильный ответ';
+                instrEl.className = 'text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit';
+            }
+
+            let badgesHtml = '';
+            if (currentQ.isMulti) {
+                badgesHtml += `<span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-bold text-xs">🔢 Несколько ответов</span>`;
+            }
+            document.getElementById('exam-q-badges').innerHTML = badgesHtml;
+
+            const isFlagged = !!examFlagged[examCurrentIdx];
+            const flagBtn = document.getElementById('btn-exam-flag');
+            const flagLabel = document.getElementById('exam-flag-label');
+            if (isFlagged) {
+                flagBtn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 border border-amber-400 text-amber-900 transition flex items-center gap-1';
+                flagLabel.textContent = 'Отмечено';
+            } else {
+                flagBtn.className = 'px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1';
+                flagLabel.textContent = 'На проверку';
+            }
+
+            const userAns = examUserAnswers[examCurrentIdx];
+            const isInstantRevealed = examModeType === 'instant' && (
+                (!currentQ.isMulti && userAns !== undefined) ||
+                (currentQ.isMulti && examMultiConfirmed[examCurrentIdx])
+            );
+
+            const multiSubmitWrap = document.getElementById('exam-multi-submit-wrap');
+            if (examModeType === 'instant' && currentQ.isMulti && !examMultiConfirmed[examCurrentIdx]) {
+                multiSubmitWrap.classList.remove('hidden');
+            } else {
+                multiSubmitWrap.classList.add('hidden');
+            }
+
+            const optsContainer = document.getElementById('exam-options-container');
+            optsContainer.innerHTML = currentQ.options.map((opt, oIdx) => {
+                const isSelected = currentQ.isMulti
+                    ? (Array.isArray(userAns) && userAns.includes(oIdx))
+                    : (userAns === oIdx);
+
+                let btnStyle = 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 bg-white text-slate-800';
+                let badgeStyle = 'bg-slate-100 text-slate-700';
+                let iconPrefix = currentQ.isMulti ? (isSelected ? '☑' : '☐') : (oIdx + 1);
+
+                if (!isInstantRevealed) {
+                    if (isSelected) {
+                        btnStyle = 'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-1 ring-indigo-600';
+                        badgeStyle = 'bg-indigo-600 text-white';
+                    }
+                } else {
+                    if (opt.isCorrect) {
+                        btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950';
+                        badgeStyle = 'bg-emerald-600 text-white';
+                    } else if (isSelected && !opt.isCorrect) {
+                        btnStyle = 'border-rose-500 bg-rose-50 text-rose-950';
+                        badgeStyle = 'bg-rose-600 text-white';
+                    } else {
+                        btnStyle = 'border-slate-200 opacity-60 bg-white';
+                    }
+                }
+
+                return `
+                    <button data-opt-idx="${oIdx}" class="exam-opt-btn w-full text-left p-4 rounded-xl border-2 transition flex items-start gap-3 ${btnStyle}">
+                        <span class="w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
+                        <span class="text-sm sm:text-base font-medium leading-snug">${opt.text}</span>
+                    </button>
+                `;
+            }).join('');
+
+            optsContainer.querySelectorAll('.exam-opt-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (isInstantRevealed) return;
+                    const chosenIdx = parseInt(btn.getAttribute('data-opt-idx'), 10);
+
+                    if (!currentQ.isMulti) {
+                        examUserAnswers[examCurrentIdx] = chosenIdx;
+                    } else {
+                        let arr = Array.isArray(examUserAnswers[examCurrentIdx]) ? [...examUserAnswers[examCurrentIdx]] : [];
+                        if (arr.includes(chosenIdx)) {
+                            arr = arr.filter(i => i !== chosenIdx);
+                        } else {
+                            arr.push(chosenIdx);
+                        }
+                        examUserAnswers[examCurrentIdx] = arr;
+                    }
+                    renderExamState();
+                });
+            });
+
+            const instantFb = document.getElementById('exam-instant-feedback');
+            if (isInstantRevealed) {
+                const isRight = isQuestionAnsweredCorrectly(currentQ, userAns);
+                instantFb.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-900', 'bg-rose-50', 'border-rose-200', 'text-rose-900');
+                if (isRight) {
+                    instantFb.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+                    instantFb.innerHTML = `✅ <b>Верно!</b> Правильный ответ: ${currentQ.answer}`;
+                } else {
+                    instantFb.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
+                    instantFb.innerHTML = `❌ <b>Ошибка.</b> Правильный ответ: <b>${currentQ.answer}</b>`;
+                }
+            } else {
+                instantFb.classList.add('hidden');
+            }
+
+            document.getElementById('btn-exam-prev').disabled = examCurrentIdx === 0;
+            document.getElementById('btn-exam-prev').classList.toggle('opacity-50', examCurrentIdx === 0);
+            document.getElementById('btn-exam-next').textContent = examCurrentIdx === total - 1 ? 'Завершить и проверить ✓' : 'Следующий вопрос →';
+
+            const gridContainer = document.getElementById('exam-grid-nav');
+            gridContainer.innerHTML = examQuestions.map((qItem, idx) => {
+                const uAns = examUserAnswers[idx];
+                const isAns = hasUserAnsweredQuestion(uAns);
+                const isCurr = idx === examCurrentIdx;
+                const isFlg = !!examFlagged[idx];
+
+                let cellClass = 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
+                if (isAns) {
+                    const revealedHere = examModeType === 'instant' && (!qItem.isMulti || examMultiConfirmed[idx]);
+                    if (revealedHere) {
+                        const isRight = isQuestionAnsweredCorrectly(qItem, uAns);
+                        cellClass = isRight ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-rose-600 text-white border-rose-600';
+                    } else {
+                        cellClass = 'bg-indigo-600 text-white border-indigo-600';
+                    }
+                }
+                if (isFlg) {
+                    cellClass = 'bg-amber-400 text-slate-950 border-amber-500 font-extrabold';
+                }
+                if (isCurr) {
+                    cellClass += ' ring-2 ring-offset-1 ring-slate-900';
+                }
+
+                return `
+                    <button data-nav-idx="${idx}" class="exam-grid-btn h-8 rounded-lg border text-xs font-bold transition flex items-center justify-center ${cellClass}">
+                        ${idx + 1}
+                    </button>
+                `;
+            }).join('');
+
+            gridContainer.querySelectorAll('.exam-grid-btn').forEach(b => {
+                b.addEventListener('click', () => {
+                    examCurrentIdx = parseInt(b.getAttribute('data-nav-idx'), 10);
+                    renderExamState();
+                });
+            });
+        }
+
+        function finishExam() {
+            examIsActive = false;
+            if (examTimerInterval) clearInterval(examTimerInterval);
+
+            const total = examQuestions.length;
+            let correct = 0;
+
+            examQuestions.forEach((qItem, idx) => {
+                const uAns = examUserAnswers[idx];
+                const isRight = isQuestionAnsweredCorrectly(qItem, uAns);
+                if (isRight) {
+                    correct++;
+                    progressMap[qItem.id] = 'known';
+                } else {
+                    progressMap[qItem.id] = 'review';
+                }
+            });
+            saveProgress();
+
+            const pct = Math.round((correct / total) * 100);
+            const passThreshold = total === 80 ? 70 : Math.ceil(total * 0.875);
+            const isPassed = correct >= passThreshold;
+
+            const minsSpent = Math.floor(examTotalSecondsSpent / 60);
+            const secsSpent = examTotalSecondsSpent % 60;
+            const timeStr = `${String(minsSpent).padStart(2, '0')}:${String(secsSpent).padStart(2, '0')}`;
+
+            document.getElementById('exam-active-screen').classList.add('hidden');
+            document.getElementById('exam-active-screen').classList.remove('flex');
+
+            const resScreen = document.getElementById('exam-result-screen');
+            resScreen.classList.remove('hidden');
+            resScreen.classList.add('flex');
+
+            const verdictCard = document.getElementById('exam-verdict-card');
+            const verdictBadge = document.getElementById('exam-verdict-badge');
+            const verdictTitle = document.getElementById('exam-verdict-title');
+            const verdictSubtitle = document.getElementById('exam-verdict-subtitle');
+
+            if (isPassed) {
+                verdictCard.className = 'rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5 bg-emerald-50 border-emerald-400 text-emerald-950';
+                verdictBadge.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-600 text-white w-fit';
+                verdictBadge.textContent = '✅ ТЕСТ СДАН (Аккредитация пройдена)';
+                verdictTitle.textContent = `Отличный результат: ${correct} из ${total}!`;
+                verdictSubtitle.textContent = `Вы набрали проходной балл (необходимо минимум ${passThreshold} из ${total}, то есть ≥ 87.5% правильных ответов).`;
+            } else {
+                verdictCard.className = 'rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5 bg-rose-50 border-rose-400 text-rose-950';
+                verdictBadge.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-600 text-white w-fit';
+                verdictBadge.textContent = '❌ ТЕСТ НЕ СДАН (Ниже порога 70/80)';
+                verdictTitle.textContent = `Набрано ${correct} из ${total} баллов`;
+                verdictSubtitle.textContent = `Для успешной сдачи аккредитации СПО необходимо минимум ${passThreshold} из ${total} правильных ответов (не хватило ${passThreshold - correct} балл.). Все ошибки автоматически добавлены в раздел «Повторить».`;
+            }
+
+            document.getElementById('exam-res-score').textContent = `${correct} / ${total}`;
+            document.getElementById('exam-res-pct').textContent = `${pct}%`;
+            document.getElementById('exam-res-time').textContent = timeStr;
+
+            examReviewFilter = correct === total ? 'all' : 'mistakes';
+            renderExamReviewList();
+        }
+
+        function renderExamReviewList() {
+            const container = document.getElementById('exam-review-list');
+            const btnMistakes = document.getElementById('btn-exam-filter-mistakes');
+            const btnAll = document.getElementById('btn-exam-filter-all');
+
+            if (examReviewFilter === 'mistakes') {
+                btnMistakes.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white';
+                btnAll.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200';
+            } else {
+                btnMistakes.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200';
+                btnAll.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white';
+            }
+
+            const itemsToRender = examQuestions
+                .map((qItem, idx) => {
+                    const uAns = examUserAnswers[idx];
+                    const isRight = isQuestionAnsweredCorrectly(qItem, uAns);
+                    let userText = 'Не дан ответ (пропущено)';
+                    if (hasUserAnsweredQuestion(uAns)) {
+                        if (!qItem.isMulti) {
+                            userText = qItem.options[uAns] ? qItem.options[uAns].text : 'Не дан ответ';
+                        } else {
+                            userText = uAns.map(i => qItem.options[i]?.text).filter(Boolean).join('; ');
+                        }
+                    }
+                    return { ...qItem, ticketNum: idx + 1, isRight, userText };
+                })
+                .filter(item => examReviewFilter === 'all' ? true : !item.isRight);
+
+            if (itemsToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="p-8 text-center text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200 font-bold">
+                        🎉 Ни одной ошибки! Вы ответили правильно на все вопросы билета.
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = itemsToRender.map(item => `
+                <div class="p-4 rounded-xl border ${item.isRight ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-300 bg-rose-50/40'} flex flex-col gap-2">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-xs">Билет №${item.ticketNum} (Вопрос #${item.id})</span>
+                            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium text-xs">Блок ${item.blockId}</span>
+                            ${item.isMulti ? '<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-xs">Несколько ответов</span>' : ''}
+                        </div>
+                        <span class="text-xs font-extrabold ${item.isRight ? 'text-emerald-700' : 'text-rose-700'}">
+                            ${item.isRight ? '✅ Верно' : '❌ Ошибка'}
+                        </span>
+                    </div>
+                    <div class="font-bold text-slate-900 text-sm sm:text-base">${item.question}</div>
+                    ${!item.isRight ? `<div class="text-xs sm:text-sm text-rose-800"><b>Ваш ответ:</b> ${item.userText}</div>` : ''}
+                    <div class="text-xs sm:text-sm text-emerald-900 bg-emerald-100/70 px-3 py-1.5 rounded-lg">
+                        <b>Правильный ответ:</b> ${item.answer}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ЛОГИКА РЕЖИМА: ФЛЕШ-КАРТОЧКИ (КВИЗЛЕТ) ====================
+        function renderFlashcard() {
+            if (filteredQuestions.length === 0) return;
+            if (fcIndex >= filteredQuestions.length) fcIndex = 0;
+            if (fcIndex < 0) fcIndex = filteredQuestions.length - 1;
+
+            const item = filteredQuestions[fcIndex];
+            const inner = document.getElementById('flashcard-inner');
+            isCardFlipped = false;
+            inner.classList.remove('flipped');
+
+            document.getElementById('fc-counter').textContent = `Карточка ${fcIndex + 1} из ${filteredQuestions.length}`;
+            document.getElementById('fc-q-id').textContent = `Вопрос #${item.id}`;
+            document.getElementById('fc-a-id').textContent = `Правильный ответ • #${item.id}`;
+            document.getElementById('fc-q-block').textContent = `Блок ${item.blockId}: ${item.blockName}`;
+
+            const status = progressMap[item.id];
+            const statusBadge = document.getElementById('fc-status-badge');
+            if (status === 'known') {
+                statusBadge.textContent = '✅ Изучено («Знаю»)';
+                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800';
+            } else if (status === 'review') {
+                statusBadge.textContent = '⭐ В избранном / Повторить';
+                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800';
+            } else {
+                statusBadge.textContent = '🆕 Не изучено';
+                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600';
+            }
+
+            let badgesHtml = '';
+            if (item.isMulti) {
+                badgesHtml += `<span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 font-bold text-xs">🔢 Несколько ответов</span>`;
+            }
+            document.getElementById('fc-q-badges').innerHTML = badgesHtml;
+
+            document.getElementById('fc-q-text').textContent = item.question;
+            document.getElementById('fc-a-text').textContent = item.answer;
+            document.getElementById('fc-a-note').classList.add('hidden');
+        }
+
+        function flipCard() {
+            isCardFlipped = !isCardFlipped;
+            const inner = document.getElementById('flashcard-inner');
+            if (isCardFlipped) inner.classList.add('flipped');
+            else inner.classList.remove('flipped');
+        }
+
+        function markCurrentFlashcard(status) {
+            if (filteredQuestions.length === 0) return;
+            const item = filteredQuestions[fcIndex];
+            progressMap[item.id] = status;
+            saveProgress();
+
+            if (fcIndex < filteredQuestions.length - 1) {
+                fcIndex++;
+            } else {
+                fcIndex = 0;
+            }
+            renderFlashcard();
+        }
+
+        // ==================== ЛОГИКА РЕЖИМА: ТРЕНИРОВКА (ТЕСТ С ВАРИАНТАМИ) ====================
+        function renderQuizQuestion() {
+            if (filteredQuestions.length === 0) return;
+            if (quizIndex >= filteredQuestions.length) quizIndex = 0;
+
+            quizAnswered = false;
+            quizMultiSelection.clear();
+            const item = filteredQuestions[quizIndex];
+            quizCurrentOptions = getShuffledQuestionOptions(item);
+
+            document.getElementById('quiz-counter').textContent = `Вопрос ${quizIndex + 1} из ${filteredQuestions.length}`;
+            document.getElementById('quiz-q-id').textContent = `Вопрос #${item.id}`;
+            document.getElementById('quiz-q-block').textContent = `Блок ${item.blockId}: ${item.blockName}`;
+            document.getElementById('quiz-q-text').textContent = item.question;
+
+            const instrEl = document.getElementById('quiz-q-instruction');
+            const submitWrap = document.getElementById('quiz-multi-submit-wrap');
+            if (item.isMulti) {
+                instrEl.textContent = '☑ Выберите несколько правильных ответов и нажмите «Подтвердить выбранные ответы»';
+                instrEl.className = 'text-xs font-bold text-purple-800 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg w-fit';
+                submitWrap.classList.remove('hidden');
+            } else {
+                instrEl.textContent = '🔘 Выберите 1 правильный ответ';
+                instrEl.className = 'text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit';
+                submitWrap.classList.add('hidden');
+            }
+
+            let badgesHtml = '';
+            if (item.isMulti) {
+                badgesHtml += `<span class="px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-semibold text-xs">🔢 Несколько ответов</span>`;
+            }
+            document.getElementById('quiz-q-badges').innerHTML = badgesHtml;
+
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            renderQuizOptionsUI(item);
+        }
+
+        function renderQuizOptionsUI(item) {
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = quizCurrentOptions.map((opt, idx) => {
+                const isSelected = quizMultiSelection.has(idx);
+                let btnStyle = 'border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 bg-white text-slate-800';
+                let badgeStyle = 'bg-slate-100 text-slate-700';
+                let iconPrefix = item.isMulti ? (isSelected ? '☑' : '☐') : (idx + 1);
+
+                if (!quizAnswered && item.isMulti && isSelected) {
+                    btnStyle = 'border-indigo-600 bg-indigo-50/80 text-indigo-950 ring-1 ring-indigo-600';
+                    badgeStyle = 'bg-indigo-600 text-white';
+                } else if (quizAnswered) {
+                    if (opt.isCorrect) {
+                        btnStyle = 'border-emerald-500 bg-emerald-50 text-emerald-950';
+                        badgeStyle = 'bg-emerald-600 text-white';
+                    } else if (isSelected && !opt.isCorrect) {
+                        btnStyle = 'border-rose-500 bg-rose-50 text-rose-950';
+                        badgeStyle = 'bg-rose-600 text-white';
+                    } else {
+                        btnStyle = 'border-slate-200 opacity-60 bg-white';
+                    }
+                }
+
+                return `
+                    <button data-opt-idx="${idx}" class="quiz-opt-btn w-full text-left p-4 rounded-xl border-2 transition flex items-start gap-3 ${btnStyle}">
+                        <span class="w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
+                        <span class="text-sm sm:text-base font-medium leading-snug">${opt.text}</span>
+                    </button>
+                `;
+            }).join('');
+
+            optionsContainer.querySelectorAll('.quiz-opt-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (quizAnswered) return;
+                    const idx = parseInt(btn.getAttribute('data-opt-idx'), 10);
+
+                    if (!item.isMulti) {
+                        quizMultiSelection.clear();
+                        quizMultiSelection.add(idx);
+                        evaluateQuizQuestion(item);
+                    } else {
+                        if (quizMultiSelection.has(idx)) {
+                            quizMultiSelection.delete(idx);
+                        } else {
+                            quizMultiSelection.add(idx);
+                        }
+                        renderQuizOptionsUI(item);
+                    }
+                });
+            });
+        }
+
+        function evaluateQuizQuestion(item) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+            quizTotalAnswered++;
+
+            document.getElementById('quiz-multi-submit-wrap').classList.add('hidden');
+
+            const selectedIndices = Array.from(quizMultiSelection);
+            const correctIndices = quizCurrentOptions
+                .map((o, idx) => o.isCorrect ? idx : -1)
+                .filter(idx => idx !== -1);
+
+            const isCorrect = selectedIndices.length === correctIndices.length &&
+                              correctIndices.every(cIdx => quizMultiSelection.has(cIdx));
+
+            if (isCorrect) {
+                quizCorrectCount++;
+                progressMap[item.id] = 'known';
+            } else {
+                progressMap[item.id] = 'review';
+            }
+            saveProgress();
+
+            const pct = Math.round((quizCorrectCount / quizTotalAnswered) * 100);
+            document.getElementById('quiz-score').textContent = `Верно: ${quizCorrectCount} / ${quizTotalAnswered} (${pct}%)`;
+
+            renderQuizOptionsUI(item);
+
+            const fb = document.getElementById('quiz-feedback');
+            const fbText = document.getElementById('quiz-feedback-text');
+            fb.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'text-emerald-900', 'bg-rose-50', 'border-rose-200', 'text-rose-900');
+
+            if (isCorrect) {
+                fb.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+                fbText.innerHTML = `✅ <b>Верно!</b> Правильный ответ: <b>${item.answer}</b>`;
+            } else {
+                fb.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
+                fbText.innerHTML = `❌ <b>Ошибка.</b> Вопрос добавлен в «Повторить». Правильный ответ: <b>${item.answer}</b>`;
+            }
+        }
+
+        // ==================== ЛОГИКА РЕЖИМА: БАЗА ЗНАНИЙ (414) ====================
+        function renderListView() {
+            const container = document.getElementById('list-container');
+            const blurEnabled = document.getElementById('toggle-blur-answers').checked;
+            document.getElementById('list-count').textContent = filteredQuestions.length;
+
+            container.innerHTML = filteredQuestions.map(item => {
+                const st = progressMap[item.id];
+                const isKnown = st === 'known';
+                const isReview = st === 'review';
+
+                return `
+                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex-1 space-y-1.5">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-xs">#${item.id}</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium text-xs">Блок ${item.blockId}: ${item.blockName}</span>
+                                ${item.isMulti ? '<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-900 font-bold text-xs">🔢 Несколько ответов</span>' : ''}
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">${item.question}</h3>
+                            <div class="pt-1">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-teal-700 mr-1">Правильный ответ:</span>
+                                <span onclick="this.classList.toggle('revealed')" class="text-sm sm:text-base font-semibold text-teal-900 bg-teal-50/80 px-2 py-0.5 rounded cursor-pointer ${blurEnabled ? 'blur-answer' : ''}">${item.answer}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 shrink-0 self-end md:self-center">
+                            <button onclick="setItemStatus(${item.id}, 'review')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isReview ? 'bg-amber-500 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-amber-100 hover:text-amber-800'}">
+                                ⭐ Повторить
+                            </button>
+                            <button onclick="setItemStatus(${item.id}, 'known')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${isKnown ? 'bg-emerald-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-emerald-100 hover:text-emerald-800'}">
+                                ✅ Знаю
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.setItemStatus = function(id, status) {
+            if (progressMap[id] === status) {
+                delete progressMap[id];
+            } else {
+                progressMap[id] = status;
+            }
+            saveProgress();
+            if (currentMode === 'list') renderListView();
+        };
+
+        // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProgress();
+            updateHeaderStats();
+            renderBlockButtons();
+            applyFilters();
+
+            // Переключение вкладок режимов
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentMode = tab.getAttribute('data-mode');
+                    document.querySelectorAll('.mode-tab').forEach(t => {
+                        t.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60';
+                    });
+                    tab.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm';
+                    renderActiveView();
+                });
+            });
+
+            // Фильтры по статусу
+            document.querySelectorAll('.status-filter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeStatus = btn.getAttribute('data-status');
+                    document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('ring-2', 'ring-indigo-600', 'ring-offset-1'));
+                    btn.classList.add('ring-2', 'ring-indigo-600', 'ring-offset-1');
+                    applyFilters();
+                });
+            });
+
+            // Поиск
+            const searchInput = document.getElementById('search-input');
+            const clearSearch = document.getElementById('clear-search');
+            searchInput.addEventListener('input', (e) => {
+                searchQuery = e.target.value;
+                clearSearch.classList.toggle('hidden', !searchQuery);
+                applyFilters();
+            });
+            clearSearch.addEventListener('click', () => {
+                searchInput.value = '';
+                searchQuery = '';
+                clearSearch.classList.add('hidden');
+                applyFilters();
+            });
+
+            // Сброс фильтров при пустом результате
+            document.getElementById('btn-reset-filters').addEventListener('click', () => {
+                activeBlock = 'all';
+                activeStatus = 'all';
+                searchQuery = '';
+                searchInput.value = '';
+                clearSearch.classList.add('hidden');
+                renderBlockButtons();
+                applyFilters();
+            });
+
+            // Управление флеш-карточками
+            document.getElementById('flashcard-container').addEventListener('click', flipCard);
+            document.getElementById('btn-fc-prev').addEventListener('click', () => {
+                fcIndex--;
+                renderFlashcard();
+            });
+            document.getElementById('btn-fc-next').addEventListener('click', () => {
+                fcIndex++;
+                renderFlashcard();
+            });
+            document.getElementById('btn-fc-review').addEventListener('click', () => markCurrentFlashcard('review'));
+            document.getElementById('btn-fc-known').addEventListener('click', () => markCurrentFlashcard('known'));
+            document.getElementById('btn-fc-shuffle').addEventListener('click', () => {
+                filteredQuestions.sort(() => Math.random() - 0.5);
+                fcIndex = 0;
+                renderFlashcard();
+            });
+
+            // Быстрый переход к номеру вопроса
+            document.getElementById('fc-jump-input').addEventListener('change', (e) => {
+                const targetId = parseInt(e.target.value, 10);
+                const foundIdx = filteredQuestions.findIndex(q => q.id === targetId);
+                if (foundIdx !== -1) {
+                    fcIndex = foundIdx;
+                    renderFlashcard();
+                } else if (targetId >= 1 && targetId <= filteredQuestions.length) {
+                    fcIndex = targetId - 1;
+                    renderFlashcard();
+                }
+                e.target.value = '';
+            });
+
+            // Управление тестовым тренажёром
+            document.getElementById('btn-quiz-submit-multi').addEventListener('click', () => {
+                if (filteredQuestions.length === 0) return;
+                evaluateQuizQuestion(filteredQuestions[quizIndex]);
+            });
+            document.getElementById('btn-quiz-next').addEventListener('click', () => {
+                quizIndex++;
+                renderQuizQuestion();
+            });
+            document.getElementById('btn-quiz-shuffle').addEventListener('click', () => {
+                filteredQuestions.sort(() => Math.random() - 0.5);
+                quizIndex = 0;
+                renderQuizQuestion();
+            });
+            document.getElementById('btn-quiz-reset-score').addEventListener('click', () => {
+                quizCorrectCount = 0;
+                quizTotalAnswered = 0;
+                document.getElementById('quiz-score').textContent = `Верно: 0 / 0 (0%)`;
+                renderQuizQuestion();
+            });
+
+            // ==================== ОБРАБОТЧИКИ ЭКЗАМЕНА (80 ВОПРОСОВ / 60 МИНУТ) ====================
+            document.getElementById('btn-start-exam').addEventListener('click', () => startNewExam());
+            document.getElementById('btn-exam-confirm-multi').addEventListener('click', () => {
+                examMultiConfirmed[examCurrentIdx] = true;
+                renderExamState();
+            });
+            document.getElementById('btn-exam-prev').addEventListener('click', () => {
+                if (examCurrentIdx > 0) {
+                    examCurrentIdx--;
+                    renderExamState();
+                }
+            });
+            document.getElementById('btn-exam-next').addEventListener('click', () => {
+                if (examCurrentIdx < examQuestions.length - 1) {
+                    examCurrentIdx++;
+                    renderExamState();
+                } else {
+                    finishExam();
+                }
+            });
+            document.getElementById('btn-exam-flag').addEventListener('click', () => {
+                examFlagged[examCurrentIdx] = !examFlagged[examCurrentIdx];
+                renderExamState();
+            });
+            document.getElementById('btn-exam-pause').addEventListener('click', (e) => {
+                examIsPaused = !examIsPaused;
+                e.target.textContent = examIsPaused ? 'Продолжить' : 'Пауза';
+            });
+            document.getElementById('btn-exam-finish').addEventListener('click', () => finishExam());
+            document.getElementById('btn-exam-new').addEventListener('click', () => {
+                document.getElementById('exam-result-screen').classList.add('hidden');
+                document.getElementById('exam-result-screen').classList.remove('flex');
+                document.getElementById('exam-start-screen').classList.remove('hidden');
+            });
+            document.getElementById('btn-exam-retry-mistakes').addEventListener('click', () => {
+                const mistakeObjs = examQuestions.filter((qItem, idx) => {
+                    const uAns = examUserAnswers[idx];
+                    return !isQuestionAnsweredCorrectly(qItem, uAns);
+                });
+                if (mistakeObjs.length > 0) {
+                    startNewExam(mistakeObjs);
+                } else {
+                    startNewExam();
+                }
+            });
+            document.getElementById('btn-exam-save-mistakes').addEventListener('click', (e) => {
+                examQuestions.forEach((qItem, idx) => {
+                    const uAns = examUserAnswers[idx];
+                    if (!isQuestionAnsweredCorrectly(qItem, uAns)) {
+                        progressMap[qItem.id] = 'review';
+                    }
+                });
+                saveProgress();
+                e.target.textContent = '✅ Все ошибки сохранены в «Повторить»!';
+            });
+            document.getElementById('btn-exam-filter-mistakes').addEventListener('click', () => {
+                examReviewFilter = 'mistakes';
+                renderExamReviewList();
+            });
+            document.getElementById('btn-exam-filter-all').addEventListener('click', () => {
+                examReviewFilter = 'all';
+                renderExamReviewList();
+            });
+
+            // Чекбокс размытия ответов в полном списке
+            document.getElementById('toggle-blur-answers').addEventListener('change', renderListView);
+
+            // Модальное окно сброса прогресса
+            const modal = document.getElementById('reset-modal');
+            document.getElementById('btn-reset-modal').addEventListener('click', () => modal.classList.remove('hidden'));
+            document.getElementById('btn-cancel-reset').addEventListener('click', () => modal.classList.add('hidden'));
+            document.getElementById('btn-confirm-reset').addEventListener('click', () => {
+                progressMap = {};
+                saveProgress();
+                modal.classList.add('hidden');
+                renderActiveView();
+            });
+
+            // Горячие клавиши клавиатуры
+            document.addEventListener('keydown', (e) => {
+                if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
+
+                if (currentMode === 'exam' && examIsActive) {
+                    if (['1', '2', '3', '4', '5'].includes(e.key)) {
+                        const idx = parseInt(e.key, 10) - 1;
+                        const btns = document.querySelectorAll('.exam-opt-btn');
+                        if (btns[idx]) btns[idx].click();
+                    } else if (e.code === 'ArrowRight' && examCurrentIdx < examQuestions.length - 1) {
+                        examCurrentIdx++;
+                        renderExamState();
+                    } else if (e.code === 'ArrowLeft' && examCurrentIdx > 0) {
+                        examCurrentIdx--;
+                        renderExamState();
+                    }
+                } else if (currentMode === 'flashcards') {
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        flipCard();
+                    } else if (e.code === 'ArrowRight') {
+                        fcIndex++;
+                        renderFlashcard();
+                    } else if (e.code === 'ArrowLeft') {
+                        fcIndex--;
+                        renderFlashcard();
+                    } else if (e.key === '1') {
+                        markCurrentFlashcard('review');
+                    } else if (e.key === '2') {
+                        markCurrentFlashcard('known');
+                    }
+                } else if (currentMode === 'quiz') {
+                    if (['1', '2', '3', '4', '5'].includes(e.key) && !quizAnswered) {
+                        const idx = parseInt(e.key, 10) - 1;
+                        const btns = document.querySelectorAll('.quiz-opt-btn');
+                        if (btns[idx]) btns[idx].click();
+                    } else if (e.code === 'Enter' && !quizAnswered && filteredQuestions[quizIndex]?.isMulti) {
+                        e.preventDefault();
+                        evaluateQuizQuestion(filteredQuestions[quizIndex]);
+                    } else if ((e.code === 'Enter' || e.code === 'Space') && quizAnswered) {
+                        e.preventDefault();
+                        quizIndex++;
+                        renderQuizQuestion();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
