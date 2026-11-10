@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Аккредитация СПО: Сестринское дело — Полная база (414 вопросов + Экзамен 80/60)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -10,26 +10,49 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: contain;
         }
-        /* 3D эффект переворота карточки (Quizlet style) */
+        /* Мгновенный отклик кнопок без 300мс задержки и случайного зума при двойном тапе */
+        button, a, input, select, label {
+            touch-action: manipulation;
+        }
+        /* 3D эффект переворота карточки без обрезания длинного текста и без бага просвечивания в iOS Safari */
         .perspective-1000 {
-            perspective: 1000px;
+            perspective: 1200px;
+            -webkit-perspective: 1200px;
         }
-        .transform-style-3d {
+        .flashcard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
             transform-style: preserve-3d;
-            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.42s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
         }
-        .backface-hidden {
+        .flashcard-face {
+            grid-area: 1 / 1;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
+            transform: translateZ(1px);
+            -webkit-transform: translateZ(1px);
         }
         .rotate-y-180 {
-            transform: rotateY(180deg);
+            transform: rotateY(180deg) translateZ(1px);
+            -webkit-transform: rotateY(180deg) translateZ(1px);
         }
         .flipped {
             transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
         }
-        /* Скрытие полосы прокрутки для горизонтальных табов */
+        /* Слой перетаскивания (2D свайп) отделён от 3D переворота */
+        .drag-spring-return {
+            transition: transform 0.36s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+        }
+        .drag-fly-out {
+            transition: transform 0.28s cubic-bezier(0.4, 0, 1, 1), opacity 0.26s ease;
+        }
+        /* Скрытие полосы прокрутки для горизонтальных чипсов-фильтров */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -41,71 +64,109 @@
         .blur-answer {
             filter: blur(6px);
             user-select: none;
-            transition: filter 0.25s ease;
+            transition: filter 0.2s ease;
         }
         .blur-answer:hover, .blur-answer.revealed {
             filter: blur(0);
             user-select: auto;
         }
+        /* Безопасная зона внизу для iPhone с Home Indicator */
+        .pb-safe {
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .main-bottom-pad {
+            padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+        }
+        @media (min-width: 640px) {
+            .main-bottom-pad {
+                padding-bottom: 1.5rem;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen text-slate-800 flex flex-col">
+<body class="min-h-[100dvh] text-slate-800 flex flex-col main-bottom-pad overflow-x-hidden">
 
-    <!-- Верхняя шапка с общей статистикой -->
-    <header class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-teal-900 text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-xl font-bold shrink-0 border border-white/20">
+    <!-- Компактная липкая шапка (< 56px на мобильных экранах) -->
+    <header class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-teal-900 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 sm:py-3">
+            <div class="flex items-center justify-between gap-2">
+                <!-- Логотип и заголовок -->
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-xl font-bold shrink-0 border border-white/20">
                         ✚
                     </div>
-                    <div>
-                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight">Аккредитация СПО: Сестринское дело</h1>
-                        <p class="text-xs text-indigo-200">Единая проверенная база: 414 вопросов (7 блоков) • Квизлет • Тренировка • Экзамен 80/60</p>
+                    <div class="min-w-0">
+                        <h1 class="text-sm sm:text-lg font-extrabold tracking-tight truncate">Аккредитация СПО: Сестринское дело</h1>
+                        <p class="hidden sm:block text-xs text-indigo-200 truncate">Единая база: 414 вопросов (7 блоков) • Квизлет • Тест • Экзамен 80/60</p>
                     </div>
                 </div>
 
-                <!-- Счетчики прогресса -->
-                <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-sm">
-                    <div class="bg-white/10 backdrop-blur px-3 py-1.5 rounded-lg border border-white/15 flex items-center gap-1.5">
-                        <span class="text-indigo-200">Всего в базе:</span>
+                <!-- Компактные пилюли статистики + кнопка сброса -->
+                <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0 text-xs">
+                    <div class="hidden md:flex bg-white/10 backdrop-blur px-2.5 py-1 rounded-lg border border-white/15 items-center gap-1" title="Всего вопросов в базе">
+                        <span class="text-indigo-200">База:</span>
                         <span id="stat-total" class="font-bold text-white">414</span>
                     </div>
-                    <div class="bg-emerald-500/20 backdrop-blur px-3 py-1.5 rounded-lg border border-emerald-400/30 flex items-center gap-1.5">
-                        <span class="text-emerald-200">Изучено («Знаю»):</span>
-                        <span id="stat-known" class="font-bold text-emerald-300">0</span>
+                    <div class="bg-emerald-500/20 backdrop-blur px-2 sm:px-2.5 py-1 rounded-lg border border-emerald-400/30 flex items-center gap-1" title="Изучено («Знаю»)">
+                        <span>✅</span>
+                        <span class="hidden sm:inline text-emerald-200">Знаю:</span>
+                        <span id="stat-known" class="font-extrabold text-emerald-300">0</span>
                     </div>
-                    <div class="bg-amber-500/20 backdrop-blur px-3 py-1.5 rounded-lg border border-amber-400/30 flex items-center gap-1.5">
-                        <span class="text-amber-200">Повторить:</span>
-                        <span id="stat-review" class="font-bold text-amber-300">0</span>
+                    <div class="bg-amber-500/20 backdrop-blur px-2 sm:px-2.5 py-1 rounded-lg border border-amber-400/30 flex items-center gap-1" title="На повторении">
+                        <span>⭐</span>
+                        <span class="hidden sm:inline text-amber-200">Повторить:</span>
+                        <span id="stat-review" class="font-extrabold text-amber-300">0</span>
                     </div>
-                    <button id="btn-reset-modal" class="bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 px-3 py-1.5 rounded-lg border border-rose-400/30 transition font-medium">
-                        Сбросить прогресс
+                    <button id="btn-reset-modal" title="Сбросить прогресс" class="bg-rose-500/20 hover:bg-rose-500/35 active:scale-95 text-rose-200 px-2 sm:px-3 py-1 rounded-lg border border-rose-400/30 transition font-semibold flex items-center gap-1">
+                        <span>↺</span>
+                        <span class="hidden lg:inline">Сбросить</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Прогресс-бар изучения -->
-            <div class="mt-3">
-                <div class="flex justify-between text-xs text-indigo-200 mb-1">
-                    <span id="progress-label">Прогресс освоения базы: 0%</span>
-                    <span id="filtered-count-label">Выбрано: 414 вопр.</span>
-                </div>
-                <div class="w-full h-2 bg-indigo-950/60 rounded-full overflow-hidden flex">
-                    <div id="bar-known" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
-                    <div id="bar-review" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
-                </div>
+            <!-- Инфо-строка прогресса (скрыта на маленьких экранах для экономии места, видна полоска внизу шапки) -->
+            <div class="hidden sm:flex justify-between text-[11px] text-indigo-200 mt-2 mb-1">
+                <span id="progress-label">Прогресс освоения базы: 0%</span>
+                <span id="filtered-count-label">Выбрано: 414 вопр.</span>
             </div>
+        </div>
+
+        <!-- Тонкий интегрированный прогресс-бар по нижнему краю шапки -->
+        <div class="w-full h-1.5 bg-indigo-950/80 overflow-hidden flex">
+            <div id="bar-known" class="bg-emerald-400 h-full transition-all duration-300" style="width: 0%"></div>
+            <div id="bar-review" class="bg-amber-400 h-full transition-all duration-300" style="width: 0%"></div>
         </div>
     </header>
 
-    <!-- Основной контейнер -->
-    <main class="max-w-7xl w-full mx-auto px-4 py-5 sm:px-6 flex-1 flex flex-col gap-5">
+    <!-- Мобильная нижняя панель навигации (App-style Tab Bar, видна только на экранах < 640px) -->
+    <nav class="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-4px_12px_rgba(15,23,42,0.06)] pb-safe">
+        <div class="grid grid-cols-4 h-14">
+            <button data-mode="flashcards" class="mode-tab flex flex-col items-center justify-center gap-0.5 text-indigo-600 font-bold transition">
+                <span class="text-base leading-none">🗂️</span>
+                <span class="text-[11px]">Карточки</span>
+            </button>
+            <button data-mode="quiz" class="mode-tab flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition">
+                <span class="text-base leading-none">📝</span>
+                <span class="text-[11px]">Тест</span>
+            </button>
+            <button data-mode="exam" class="mode-tab flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition">
+                <span class="text-base leading-none">🏆</span>
+                <span class="text-[11px]">Экзамен</span>
+            </button>
+            <button data-mode="list" class="mode-tab flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition">
+                <span class="text-base leading-none">📋</span>
+                <span class="text-[11px]">База (414)</span>
+            </button>
+        </div>
+    </nav>
 
-        <!-- Панель управления: Режимы + Поиск + Фильтры -->
-        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 flex flex-col gap-4">
-            <!-- Переключатель 4 режимов -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-xl">
+    <!-- Основной контейнер -->
+    <main class="max-w-7xl w-full mx-auto px-3 py-3 sm:px-6 sm:py-5 flex-1 flex flex-col gap-3 sm:gap-5">
+
+        <!-- Панель управления: Режимы (на ПК/планшете) + Компактный Поиск и Горизонтальные Фильтры -->
+        <section id="control-bar-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-3 sm:p-4 flex flex-col gap-3">
+            <!-- Переключатель 4 режимов для планшетов и ПК (скрыт на телефонах, т.к. там нижний таб-бар) -->
+            <div class="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-2 bg-slate-100 p-1.5 rounded-xl">
                 <button data-mode="flashcards" class="mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
                     <span>🗂️</span> Карточки (Квизлет)
                 </button>
@@ -121,39 +182,47 @@
             </div>
 
             <!-- Панель фильтров (скрывается во время активного экзамена) -->
-            <div id="global-filters-panel" class="flex flex-col gap-3">
-                <div class="flex flex-col md:flex-row gap-3">
+            <div id="global-filters-panel" class="flex flex-col gap-2.5">
+                <!-- Строка поиска (text-base на мобильных предотвращает авто-зум в iOS Safari!) + кнопка сворачивания блоков -->
+                <div class="flex items-center gap-2">
                     <div class="relative flex-1">
-                        <input id="search-input" type="text" placeholder="Поиск по номеру (1–414), вопросу или вариантам ответа..." 
-                            class="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
-                        <span class="absolute left-3.5 top-2.5 text-slate-400">🔍</span>
-                        <button id="clear-search" class="hidden absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm font-bold">✕</button>
+                        <input id="search-input" type="search" placeholder="Поиск по № (1–414), вопросу или ответу..." 
+                            class="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-xl text-base sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                        <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
+                        <button id="clear-search" class="hidden absolute right-2.5 top-2 text-slate-400 hover:text-slate-600 w-6 h-6 flex items-center justify-center text-sm font-bold">✕</button>
                     </div>
-
-                    <!-- Фильтр по учебному статусу -->
-                    <div class="flex flex-wrap gap-1.5">
-                        <button data-status="all" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-white transition ring-2 ring-indigo-600 ring-offset-1">
-                            Все вопросы (414)
-                        </button>
-                        <button data-status="unseen" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
-                            🆕 Неизученные
-                        </button>
-                        <button data-status="review" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-amber-100 text-amber-900 hover:bg-amber-200 transition">
-                            ⭐ Повторить
-                        </button>
-                        <button data-status="known" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 transition">
-                            ✅ Изученные
-                        </button>
-                        <button data-status="multi" class="status-filter px-3 py-2 rounded-xl text-xs font-semibold bg-purple-100 text-purple-900 hover:bg-purple-200 transition">
-                            🔢 Несколько ответов
-                        </button>
-                    </div>
+                    <button id="btn-toggle-blocks" class="px-3 py-2 rounded-xl border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold shrink-0 flex items-center gap-1.5 transition">
+                        <span>📂 Блоки</span>
+                        <span id="active-block-indicator" class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 text-[10px] font-extrabold">Все</span>
+                    </button>
                 </div>
 
-                <!-- Фильтр по 7 логическим блокам -->
-                <div>
-                    <div class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Тематические блоки:</div>
-                    <div id="block-filters" class="flex flex-wrap gap-1.5">
+                <!-- Горизонтальная прокрутка фильтров по статусу (в 1 компактную строку на телефоне) -->
+                <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap pb-0.5 -mx-1 px-1">
+                    <button data-status="all" class="status-filter shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-white transition ring-2 ring-indigo-600 ring-offset-1">
+                        Все (414)
+                    </button>
+                    <button data-status="unseen" class="status-filter shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 transition">
+                        🆕 Неизученные
+                    </button>
+                    <button data-status="review" class="status-filter shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-100 text-amber-900 hover:bg-amber-200 transition">
+                        ⭐ Повторить
+                    </button>
+                    <button data-status="known" class="status-filter shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-100 text-emerald-900 hover:bg-emerald-200 transition">
+                        ✅ Изученные
+                    </button>
+                    <button data-status="multi" class="status-filter shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold bg-purple-100 text-purple-900 hover:bg-purple-200 transition">
+                        🔢 Несколько ответов
+                    </button>
+                </div>
+
+                <!-- Сворачиваемая панель тематических блоков (по умолчанию компактная горизонтальная лента, можно развернуть/свернуть) -->
+                <div id="blocks-drawer" class="hidden pt-1 border-t border-slate-100">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Тематические блоки (1–7):</span>
+                        <span id="mobile-filtered-count" class="text-[11px] font-semibold text-indigo-600 sm:hidden">Выбрано: 414</span>
+                    </div>
+                    <div id="block-filters" class="flex sm:flex-wrap gap-1.5 overflow-x-auto no-scrollbar whitespace-nowrap sm:whitespace-normal pb-1">
                         <!-- Генерируется через JS -->
                     </div>
                 </div>
@@ -161,128 +230,132 @@
         </section>
 
         <!-- Уведомление, если по фильтру ничего не найдено -->
-        <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200 p-10 text-center my-4">
-            <div class="text-4xl mb-3">🔎</div>
-            <h3 class="text-lg font-bold text-slate-800">По выбранному фильтру вопросов не найдено</h3>
-            <p class="text-sm text-slate-500 mt-1">Попробуйте сбросить строку поиска или переключить фильтр блока/статуса.</p>
-            <button id="btn-reset-filters" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">
+        <div id="empty-state" class="hidden bg-white rounded-2xl border border-slate-200 p-8 text-center my-2">
+            <div class="text-3xl mb-2">🔎</div>
+            <h3 class="text-base sm:text-lg font-bold text-slate-800">По выбранному фильтру вопросов не найдено</h3>
+            <p class="text-xs sm:text-sm text-slate-500 mt-1">Попробуйте очистить поиск или переключить фильтр статуса/блока.</p>
+            <button id="btn-reset-filters" class="mt-4 px-4 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">
                 Показать все 414 вопросов
             </button>
         </div>
 
         <!-- ==================== РЕЖИМ: ЭКЗАМЕН СПО (80 ВОПРОСОВ / 60 МИНУТ) ==================== -->
-        <section id="view-exam" class="hidden flex-1 flex flex-col gap-4">
+        <section id="view-exam" class="hidden flex-1 flex flex-col gap-3 sm:gap-4">
             
             <!-- Стартовый экран настройки экзамена -->
-            <div id="exam-start-screen" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col gap-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div id="exam-start-screen" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 flex flex-col gap-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                     <div>
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold text-xs mb-2">
                             🏛️ Стандарт первичной аккредитации СПО РФ
                         </span>
-                        <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900">Итоговое тестирование: 80 вопросов на 60 минут</h2>
-                        <p class="text-sm text-slate-600 mt-1">
-                            Случайная выборка 80 тестовых заданий из единой проверенной базы (414 вопросов) с точными дистракторами и поддержкой нескольких ответов.
+                        <h2 class="text-lg sm:text-2xl font-extrabold text-slate-900">Итоговое тестирование: 80 вопросов на 60 минут</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                            Случайная выборка 80 тестовых заданий из единой проверенной базы (414 вопросов) с оригинальными вариантами ответов.
                         </p>
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-4 shrink-0">
-                        <div class="text-center px-2">
-                            <div class="text-2xl font-extrabold text-indigo-600">80</div>
-                            <div class="text-[11px] font-semibold text-slate-500 uppercase">вопросов</div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 flex items-center justify-around sm:justify-center gap-3 sm:gap-4 shrink-0">
+                        <div class="text-center px-1 sm:px-2">
+                            <div class="text-xl sm:text-2xl font-extrabold text-indigo-600">80</div>
+                            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase">вопросов</div>
                         </div>
                         <div class="h-8 w-px bg-slate-200"></div>
-                        <div class="text-center px-2">
-                            <div class="text-2xl font-extrabold text-indigo-600">60:00</div>
-                            <div class="text-[11px] font-semibold text-slate-500 uppercase">минут</div>
+                        <div class="text-center px-1 sm:px-2">
+                            <div class="text-xl sm:text-2xl font-extrabold text-indigo-600">60:00</div>
+                            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase">минут</div>
                         </div>
                         <div class="h-8 w-px bg-slate-200"></div>
-                        <div class="text-center px-2">
-                            <div class="text-2xl font-extrabold text-emerald-600">70/80</div>
-                            <div class="text-[11px] font-semibold text-slate-500 uppercase">сдан (87.5%)</div>
+                        <div class="text-center px-1 sm:px-2">
+                            <div class="text-xl sm:text-2xl font-extrabold text-emerald-600">70/80</div>
+                            <div class="text-[10px] sm:text-[11px] font-semibold text-slate-500 uppercase">сдан (87.5%)</div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Настройки билета -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
-                        <label class="text-xs font-bold uppercase tracking-wider text-slate-600">1. Формирование экзаменационного билета (80 шт.):</label>
-                        <select id="exam-pool-select" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="all">Случайные 80 вопросов из всей базы (414 вопросов)</option>
-                            <option value="unlearned">Приоритет неизученным и «Повторить» (80 вопросов)</option>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                    <div class="bg-slate-50 rounded-xl p-3.5 sm:p-4 border border-slate-200 flex flex-col gap-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-600">1. Формирование билета (80 шт.):</label>
+                        <select id="exam-pool-select" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-base sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">Случайные 80 вопросов из всей базы (414)</option>
+                            <option value="unlearned">Приоритет неизученным и «Повторить» (80)</option>
                         </select>
-                        <p class="text-xs text-slate-500">В каждый билет включаются задания с оригинальными вариантами ответов из всех 7 тематических блоков.</p>
+                        <p class="text-xs text-slate-500">В билет включаются задания из всех 7 тематических блоков.</p>
                     </div>
 
-                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 flex flex-col gap-2">
+                    <div class="bg-slate-50 rounded-xl p-3.5 sm:p-4 border border-slate-200 flex flex-col gap-2">
                         <label class="text-xs font-bold uppercase tracking-wider text-slate-600">2. Режим проверки ответов:</label>
-                        <select id="exam-feedback-select" class="w-full px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="strict">Строгий экзамен (результат и разбор только после сдачи билета)</option>
-                            <option value="instant">Обучающий экзамен (показывать верный ответ сразу после клика)</option>
+                        <select id="exam-feedback-select" class="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-base sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="strict">Строгий экзамен (результат после сдачи билета)</option>
+                            <option value="instant">Обучающий экзамен (показывать ответ сразу)</option>
                         </select>
-                        <p class="text-xs text-slate-500">В строгом режиме вы можете свободно переключаться между всеми 80 вопросами и менять ответы до завершения таймера.</p>
+                        <p class="text-xs text-slate-500">В строгом режиме можно свободно переключаться между вопросами 1–80.</p>
                     </div>
                 </div>
 
                 <!-- Критерии оценки -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs sm:text-sm">
-                    <div class="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-3">
-                        <span class="text-xl">✅</span>
-                        <div><b>70 — 80 правильных ответов (≥ 87.5%):</b> результат <b>«СДАН»</b> (аккредитационный порог пройден).</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs sm:text-sm">
+                    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center gap-2.5">
+                        <span class="text-lg">✅</span>
+                        <div><b>70 — 80 правильных (≥ 87.5%):</b> результат <b>«СДАН»</b>.</div>
                     </div>
-                    <div class="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center gap-3">
-                        <span class="text-xl">❌</span>
-                        <div><b>69 и менее правильных ответов:</b> результат <b>«НЕ СДАН»</b> (все ошибки можно будет прорешать отдельно).</div>
+                    <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 flex items-center gap-2.5">
+                        <span class="text-lg">❌</span>
+                        <div><b>69 и менее правильных:</b> результат <b>«НЕ СДАН»</b> (разбор ошибок).</div>
                     </div>
                 </div>
 
-                <div class="flex justify-center pt-2">
-                    <button id="btn-start-exam" class="w-full sm:w-auto px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-2xl shadow-md hover:shadow-lg transition text-base flex items-center justify-center gap-2">
+                <div class="flex justify-center pt-1">
+                    <button id="btn-start-exam" class="w-full sm:w-auto px-8 py-3.5 sm:py-4 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-extrabold rounded-2xl shadow-md transition text-sm sm:text-base flex items-center justify-center gap-2">
                         <span>🚀</span> Начать экзамен (80 вопросов • 60 минут)
                     </button>
                 </div>
             </div>
 
             <!-- Активный экран прохождения экзамена -->
-            <div id="exam-active-screen" class="hidden flex-col gap-4">
-                <!-- Верхняя панель таймера и статуса экзамена -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:px-5 flex flex-wrap items-center justify-between gap-3">
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <span id="exam-q-counter" class="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs sm:text-sm">
-                            Вопрос 1 из 80
+            <div id="exam-active-screen" class="hidden flex-col gap-3 sm:gap-4">
+                <!-- Компактная верхняя панель таймера и статуса экзамена -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-2.5 sm:px-5 sm:py-3 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 sm:gap-2.5">
+                        <span id="exam-q-counter" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 text-white font-extrabold text-xs sm:text-sm">
+                            1 / 80
                         </span>
-                        <span id="exam-answered-counter" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm">
+                        <span id="exam-answered-counter" class="hidden sm:inline-block px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-semibold text-xs sm:text-sm">
                             Отвечено: 0 / 80
                         </span>
+                        <!-- Кнопка открытия сетки вопросов 1–80 на мобильном -->
+                        <button id="btn-exam-mobile-grid" class="lg:hidden px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-1 border border-slate-300">
+                            <span>🧭</span> <span id="exam-mobile-grid-label">Сетка (0/80)</span>
+                        </button>
                     </div>
 
                     <!-- Таймер 60:00 -->
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <div id="exam-timer-box" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm sm:text-base">
+                    <div class="flex items-center gap-1.5 sm:gap-2.5">
+                        <div id="exam-timer-box" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-xs sm:text-base">
                             <span>⏱️</span>
                             <span id="exam-timer-display">60:00</span>
                         </div>
-                        <button id="btn-exam-pause" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
+                        <button id="btn-exam-pause" class="px-2.5 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition">
                             Пауза
                         </button>
-                        <button id="btn-exam-finish" class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition shadow-sm">
-                            Завершить тест
+                        <button id="btn-exam-finish" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-bold transition shadow-sm">
+                            Сдать
                         </button>
                     </div>
                 </div>
 
-                <!-- Основная рабочая область: Вопрос слева + Навигационная сетка 1..80 справа -->
+                <!-- Основная рабочая область: Вопрос слева + Навигационная сетка 1..80 справа (на мобильных сетка в модальном шторке) -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
                     <!-- Карточка текущего вопроса (8 колонок) -->
-                    <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col gap-5">
-                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span id="exam-q-bank-id" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Вопрос #1</span>
-                                <span id="exam-q-block" class="px-2.5 py-1 rounded-lg bg-teal-50 text-teal-800 font-medium text-xs">Блок 1</span>
+                    <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 flex flex-col gap-4">
+                        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span id="exam-q-bank-id" class="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs">Вопрос #1</span>
+                                <span id="exam-q-block" class="px-2 py-0.5 rounded-lg bg-teal-50 text-teal-800 font-medium text-xs truncate max-w-[200px] sm:max-w-none">Блок 1</span>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <div id="exam-q-badges" class="flex flex-wrap gap-1.5"></div>
-                                <button id="btn-exam-flag" class="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1">
+                            <div class="flex items-center gap-1.5">
+                                <div id="exam-q-badges" class="flex flex-wrap gap-1"></div>
+                                <button id="btn-exam-flag" class="px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1">
                                     <span>🚩</span> <span id="exam-flag-label">На проверку</span>
                                 </button>
                             </div>
@@ -292,13 +365,13 @@
                         <p id="exam-q-instruction" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit">Выберите 1 правильный ответ</p>
 
                         <!-- Варианты ответа -->
-                        <div id="exam-options-container" class="grid grid-cols-1 gap-2.5">
+                        <div id="exam-options-container" class="grid grid-cols-1 gap-2">
                             <!-- Генерируется через JS -->
                         </div>
 
                         <!-- Кнопка подтверждения для вопросов с несколькими ответами в обучающем режиме экзамена -->
                         <div id="exam-multi-submit-wrap" class="hidden">
-                            <button id="btn-exam-confirm-multi" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition">
+                            <button id="btn-exam-confirm-multi" class="w-full sm:w-auto px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-sm shadow-sm transition">
                                 Подтвердить выбранные ответы ✓
                             </button>
                         </div>
@@ -307,91 +380,93 @@
                         <div id="exam-instant-feedback" class="hidden p-3.5 rounded-xl border text-xs sm:text-sm font-medium"></div>
 
                         <!-- Кнопки навигации под вопросом -->
-                        <div class="flex items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                            <button id="btn-exam-prev" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm transition">
-                                ← Предыдущий
+                        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                            <button id="btn-exam-prev" class="px-4 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-bold text-xs sm:text-sm transition">
+                                ← Назад
                             </button>
-                            <button id="btn-exam-next" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm transition shadow-sm">
+                            <button id="btn-exam-next" class="flex-1 sm:flex-initial px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold text-xs sm:text-sm transition shadow-sm">
                                 Следующий вопрос →
                             </button>
                         </div>
                     </div>
 
-                    <!-- Навигационная матрица 1–80 (4 колонки) -->
-                    <div class="lg:col-span-4 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 flex flex-col gap-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-extrabold uppercase tracking-wider text-slate-600">Навигация по билету (1–80)</span>
-                            <span class="text-[11px] text-slate-400">Кликните на №</span>
-                        </div>
-                        <div id="exam-grid-nav" class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-8 gap-1.5">
-                            <!-- 80 кнопок генерируются через JS -->
-                        </div>
-                        <div class="flex flex-wrap gap-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
-                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span> Отвечен</span>
-                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span> Не отвечен</span>
-                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400 inline-block"></span> На проверку 🚩</span>
+                    <!-- Навигационная матрица 1–80 для ПК (4 колонки, на мобильных открывается по кнопке «Сетка») -->
+                    <div id="exam-grid-wrapper" class="hidden lg:flex lg:col-span-4 fixed lg:static inset-0 z-50 lg:z-auto bg-slate-900/60 lg:bg-transparent backdrop-blur-sm lg:backdrop-blur-none items-end sm:items-center justify-center p-0 sm:p-4 lg:p-0">
+                        <div class="bg-white w-full max-w-lg lg:max-w-none rounded-t-2xl sm:rounded-2xl border border-slate-200 shadow-xl lg:shadow-sm p-4 flex flex-col gap-3 max-h-[80vh] overflow-y-auto">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-2 lg:border-b-0 lg:pb-0">
+                                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Навигация по билету (1–80)</span>
+                                <button id="btn-close-exam-grid" class="lg:hidden px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-bold">✕ Закрыть</button>
+                            </div>
+                            <div id="exam-grid-nav" class="grid grid-cols-8 sm:grid-cols-10 lg:grid-cols-8 gap-1.5">
+                                <!-- 80 кнопок генерируются через JS -->
+                            </div>
+                            <div class="flex flex-wrap gap-3 pt-2 border-t border-slate-100 text-[11px] text-slate-600">
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-indigo-600 inline-block"></span> Отвечен</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-100 border border-slate-300 inline-block"></span> Пусто</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400 inline-block"></span> На проверку 🚩</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Экран результатов экзамена и работы над ошибками -->
-            <div id="exam-result-screen" class="hidden flex-col gap-5">
-                <div id="exam-verdict-card" class="rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5">
+            <div id="exam-result-screen" class="hidden flex-col gap-4">
+                <div id="exam-verdict-card" class="rounded-2xl p-5 sm:p-8 border-2 shadow-sm flex flex-col gap-4">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
-                            <div id="exam-verdict-badge" class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
+                            <div id="exam-verdict-badge" class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider mb-2">
                                 ИТОГ ТЕСТИРОВАНИЯ
                             </div>
-                            <h2 id="exam-verdict-title" class="text-2xl sm:text-3xl font-extrabold"></h2>
-                            <p id="exam-verdict-subtitle" class="text-sm mt-1 opacity-90"></p>
+                            <h2 id="exam-verdict-title" class="text-xl sm:text-3xl font-extrabold"></h2>
+                            <p id="exam-verdict-subtitle" class="text-xs sm:text-sm mt-1 opacity-90"></p>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-3 bg-white/80 backdrop-blur p-4 rounded-2xl border border-slate-200/80 shrink-0">
-                            <div class="text-center px-3">
-                                <div id="exam-res-score" class="text-2xl sm:text-3xl font-extrabold text-slate-900">0 / 80</div>
-                                <div class="text-[11px] font-bold text-slate-500 uppercase">Правильных</div>
+                        <div class="flex items-center justify-around sm:justify-center gap-2 sm:gap-3 bg-white/80 backdrop-blur p-3 sm:p-4 rounded-2xl border border-slate-200/80 shrink-0">
+                            <div class="text-center px-2">
+                                <div id="exam-res-score" class="text-xl sm:text-3xl font-extrabold text-slate-900">0 / 80</div>
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Правильных</div>
                             </div>
                             <div class="h-8 w-px bg-slate-300"></div>
-                            <div class="text-center px-3">
-                                <div id="exam-res-pct" class="text-2xl sm:text-3xl font-extrabold text-indigo-600">0%</div>
-                                <div class="text-[11px] font-bold text-slate-500 uppercase">Процент (нужно 87.5%)</div>
+                            <div class="text-center px-2">
+                                <div id="exam-res-pct" class="text-xl sm:text-3xl font-extrabold text-indigo-600">0%</div>
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Порог 87.5%</div>
                             </div>
                             <div class="h-8 w-px bg-slate-300"></div>
-                            <div class="text-center px-3">
-                                <div id="exam-res-time" class="text-xl sm:text-2xl font-extrabold text-slate-700">00:00</div>
-                                <div class="text-[11px] font-bold text-slate-500 uppercase">Затрачено времени</div>
+                            <div class="text-center px-2">
+                                <div id="exam-res-time" class="text-lg sm:text-2xl font-extrabold text-slate-700">00:00</div>
+                                <div class="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase">Время</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap gap-3 pt-2">
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2.5 pt-1">
                         <button id="btn-exam-new" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition text-sm">
-                            🔄 Новый экзамен (другие 80 вопросов)
+                            🔄 Новый экзамен (80 вопросов)
                         </button>
                         <button id="btn-exam-retry-mistakes" class="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-sm transition text-sm">
-                            🎯 Прорешать только ошибки этого теста
+                            🎯 Прорешать ошибки этого теста
                         </button>
                         <button id="btn-exam-save-mistakes" class="px-4 py-3 bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold rounded-xl transition text-sm">
-                            ⭐ Добавить все ошибки в «Повторить»
+                            ⭐ Добавить ошибки в «Повторить»
                         </button>
                     </div>
                 </div>
 
                 <!-- Детальный разбор вопросов экзамена -->
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col gap-4">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 flex flex-col gap-3">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                        <h3 class="font-extrabold text-base sm:text-lg text-slate-900">Разбор ответов экзаменационного билета</h3>
+                        <h3 class="font-extrabold text-sm sm:text-lg text-slate-900">Разбор ответов билета</h3>
                         <div class="flex gap-1.5">
                             <button id="btn-exam-filter-mistakes" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 text-white">
                                 Показать ошибки
                             </button>
                             <button id="btn-exam-filter-all" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200">
-                                Все вопросы билета (80)
+                                Все вопросы (80)
                             </button>
                         </div>
                     </div>
-                    <div id="exam-review-list" class="flex flex-col gap-3">
+                    <div id="exam-review-list" class="flex flex-col gap-2.5">
                         <!-- Генерируется через JS -->
                     </div>
                 </div>
@@ -399,160 +474,208 @@
         </section>
 
         <!-- ==================== РЕЖИМ: ФЛЕШ-КАРТОЧКИ (КВИЗЛЕТ) ==================== -->
-        <section id="view-flashcards" class="flex-1 flex flex-col gap-4">
-            <!-- Навигация над карточкой -->
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm">
-                <div class="flex items-center gap-2">
-                    <span id="fc-counter" class="text-sm font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg">
-                        Карточка 1 из 414
+        <section id="view-flashcards" class="flex-1 flex flex-col gap-3">
+            <!-- Компактная навигация над карточкой -->
+            <div class="flex items-center justify-between gap-1.5 sm:gap-2 bg-white px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                    <span id="fc-counter" class="text-xs sm:text-sm font-extrabold text-indigo-950 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg shrink-0">
+                        1 / 414
                     </span>
-                    <span id="fc-status-badge" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
+                    <span id="fc-status-badge" class="text-[11px] sm:text-xs font-semibold px-2 py-1 rounded-lg bg-slate-100 text-slate-600 truncate">
                         Не изучено
                     </span>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <button id="btn-fc-shuffle" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
-                        🔀 Перемешать
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button id="btn-fc-undo" disabled title="Отменить последний свайп" class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 transition flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none">
+                        <span>↩</span> <span class="hidden md:inline">Отменить</span>
+                    </button>
+                    <button id="btn-fc-shuffle" title="Перемешать карточки" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 transition flex items-center gap-1">
+                        <span>🔀</span> <span class="hidden sm:inline">Перемешать</span>
                     </button>
                     <div class="flex items-center gap-1 text-xs text-slate-600">
-                        <span>Перейти к №:</span>
-                        <input id="fc-jump-input" type="number" min="1" max="414" placeholder="№" class="w-16 px-2 py-1 border border-slate-300 rounded-lg text-center font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span class="hidden sm:inline">№:</span>
+                        <input id="fc-jump-input" type="number" min="1" max="414" placeholder="№" class="w-14 sm:w-16 px-2 py-1 border border-slate-300 rounded-lg text-center text-base sm:text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
             </div>
 
-            <!-- 3D Карточка -->
-            <div class="perspective-1000 w-full max-w-3xl mx-auto my-1">
-                <div id="flashcard-container" class="w-full min-h-[300px] sm:min-h-[340px] cursor-pointer select-none relative">
-                    <div id="flashcard-inner" class="w-full min-h-[300px] sm:min-h-[340px] transform-style-3d relative">
-                        
-                        <!-- Лицевая сторона (Вопрос) -->
-                        <div class="backface-hidden absolute inset-0 bg-white rounded-2xl shadow-md border-2 border-slate-200 p-6 sm:p-8 flex flex-col justify-between hover:border-indigo-300 transition">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span id="fc-q-id" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs">Вопрос #1</span>
-                                    <span id="fc-q-block" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs">Блок 1</span>
+            <!-- Стек 3D-карточки со свайпом влево («Повторить») и вправо («Знаю!») -->
+            <div class="perspective-1000 w-full max-w-3xl mx-auto relative py-1">
+                <!-- Нижняя карточка стопки (эффект глубины при перетаскивании) -->
+                <div id="flashcard-stack-bg" class="pointer-events-none absolute inset-x-3 top-3 bottom-0 bg-white rounded-2xl border-2 border-slate-200/90 shadow-sm transition-transform duration-200 flex flex-col justify-between p-5 sm:p-8 opacity-70" style="transform: scale(0.95) translateY(8px);">
+                    <div class="flex items-center justify-between">
+                        <span id="fc-next-preview-id" class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-400 font-bold text-xs">Следующая карточка</span>
+                    </div>
+                    <div class="my-auto py-5 text-center">
+                        <p id="fc-next-preview-text" class="text-sm sm:text-lg font-bold text-slate-300 line-clamp-2"></p>
+                    </div>
+                    <div class="h-4"></div>
+                </div>
+
+                <!-- Активный контейнер перетаскивания (2D Drag Layer) -->
+                <div id="flashcard-container" class="w-full cursor-grab active:cursor-grabbing select-none relative z-10">
+                    <div id="flashcard-drag-layer" class="w-full relative will-change-transform">
+
+                        <!-- Всплывающий штамп «ЗНАЮ!» при свайпе вправо -->
+                        <div id="swipe-badge-know" class="pointer-events-none absolute top-4 left-4 z-30 opacity-0 transition-opacity duration-75" style="transform: rotate(-12deg) scale(0.85);">
+                            <div class="px-3.5 py-1.5 rounded-xl bg-emerald-600/95 text-white font-extrabold text-sm sm:text-base tracking-wide border-2 border-white shadow-lg flex items-center gap-1.5">
+                                <span>✅</span> <span>ЗНАЮ!</span>
+                            </div>
+                        </div>
+
+                        <!-- Всплывающий штамп «ПОВТОРИТЬ» при свайпе влево -->
+                        <div id="swipe-badge-review" class="pointer-events-none absolute top-4 right-4 z-30 opacity-0 transition-opacity duration-75" style="transform: rotate(12deg) scale(0.85);">
+                            <div class="px-3.5 py-1.5 rounded-xl bg-amber-500/95 text-white font-extrabold text-sm sm:text-base tracking-wide border-2 border-white shadow-lg flex items-center gap-1.5">
+                                <span>⭐</span> <span>ПОВТОРИТЬ</span>
+                            </div>
+                        </div>
+
+                        <!-- 3D Внутренний контейнер (отвечает только за переворот на 180 градусов) -->
+                        <div id="flashcard-inner" class="w-full min-h-[260px] sm:min-h-[320px] flashcard-grid relative">
+                            
+                            <!-- Лицевая сторона (Вопрос) -->
+                            <div id="fc-front-face" class="flashcard-face bg-white rounded-2xl shadow-md border-2 border-slate-200 p-5 sm:p-8 flex flex-col justify-between transition-colors duration-150">
+                                <div class="flex flex-wrap items-center justify-between gap-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span id="fc-q-id" class="px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs">Вопрос #1</span>
+                                        <span id="fc-q-block" class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs line-clamp-1">Блок 1</span>
+                                    </div>
+                                    <div id="fc-q-badges" class="flex flex-wrap gap-1"></div>
                                 </div>
-                                <div id="fc-q-badges" class="flex flex-wrap gap-1.5"></div>
+
+                                <div class="my-auto py-5 text-center">
+                                    <p id="fc-q-text" class="text-base sm:text-2xl font-bold text-slate-800 leading-snug sm:leading-relaxed"></p>
+                                </div>
+
+                                <div class="flex items-center justify-between text-[11px] sm:text-xs text-slate-400 font-medium pt-2 border-t border-slate-100">
+                                    <span class="text-amber-600/80 font-semibold">👈 Влево: Повторить</span>
+                                    <span>👆 Тап: Ответ</span>
+                                    <span class="text-emerald-600/80 font-semibold">Вправо: Знаю! 👉</span>
+                                </div>
                             </div>
 
-                            <div class="my-auto py-4 text-center">
-                                <p id="fc-q-text" class="text-lg sm:text-2xl font-bold text-slate-800 leading-relaxed"></p>
+                            <!-- Обратная сторона (Ответ) -->
+                            <div id="fc-back-face" class="flashcard-face rotate-y-180 bg-gradient-to-br from-emerald-950 via-teal-900 to-indigo-950 text-white rounded-2xl shadow-md border-2 border-teal-500/40 p-5 sm:p-8 flex flex-col justify-between pointer-events-none">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span id="fc-a-id" class="px-2.5 py-0.5 rounded-lg bg-white/15 text-teal-200 font-bold text-xs">Правильный ответ</span>
+                                    <span class="text-[11px] text-teal-200/90 font-medium">👆 Тап — к вопросу</span>
+                                </div>
+
+                                <div class="my-auto py-5 text-center space-y-3">
+                                    <p id="fc-a-text" class="text-base sm:text-2xl font-extrabold text-emerald-300 leading-snug sm:leading-relaxed"></p>
+                                    <div id="fc-a-note" class="hidden max-w-xl mx-auto p-3 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs sm:text-sm leading-snug"></div>
+                                </div>
+
+                                <div class="flex items-center justify-between text-[11px] text-teal-200/80 pt-2 border-t border-white/10">
+                                    <span class="text-amber-300 font-semibold">👈 Влево: Повторить</span>
+                                    <span class="text-emerald-300 font-semibold">Вправо: Знаю! 👉</span>
+                                </div>
                             </div>
 
-                            <div class="text-center text-xs text-slate-400 font-medium flex items-center justify-center gap-1.5">
-                                <span>👆 Нажмите на карточку или клавишу Пробел, чтобы увидеть ответ</span>
-                            </div>
                         </div>
-
-                        <!-- Обратная сторона (Ответ) -->
-                        <div class="backface-hidden rotate-y-180 absolute inset-0 bg-gradient-to-br from-emerald-950 via-teal-900 to-indigo-950 text-white rounded-2xl shadow-md border-2 border-teal-500/40 p-6 sm:p-8 flex flex-col justify-between">
-                            <div class="flex items-center justify-between">
-                                <span id="fc-a-id" class="px-2.5 py-1 rounded-lg bg-white/15 text-teal-200 font-bold text-xs">Правильный ответ</span>
-                                <span class="text-xs text-teal-200 font-medium">Нажмите, чтобы вернуться к вопросу</span>
-                            </div>
-
-                            <div class="my-auto py-4 text-center space-y-3">
-                                <p id="fc-a-text" class="text-lg sm:text-2xl font-extrabold text-emerald-300 leading-relaxed"></p>
-                                <div id="fc-a-note" class="hidden max-w-xl mx-auto p-3 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs sm:text-sm leading-snug"></div>
-                            </div>
-
-                            <div class="text-center text-xs text-teal-200/80">
-                                Оцените знание карточки кнопками ниже
-                            </div>
-                        </div>
-
                     </div>
                 </div>
             </div>
 
-            <!-- Кнопки управления под карточкой -->
-            <div class="max-w-3xl w-full mx-auto grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                <button id="btn-fc-prev" class="py-3 px-4 rounded-xl bg-white border border-slate-300 font-semibold text-sm text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 shadow-sm">
-                    ⬅️ Назад
-                </button>
-                <button id="btn-fc-review" class="py-3 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-sm">
-                    ⭐ Повторить (1)
-                </button>
-                <button id="btn-fc-known" class="py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition flex items-center justify-center gap-1.5 shadow-sm">
-                    ✅ Знаю! (2)
-                </button>
-                <button id="btn-fc-next" class="py-3 px-4 rounded-xl bg-white border border-slate-300 font-semibold text-sm text-slate-700 hover:bg-slate-100 transition flex items-center justify-center gap-1.5 shadow-sm">
-                    Вперёд ➡️
-                </button>
+            <!-- Эргономичные кнопки управления под большой палец -->
+            <div class="max-w-3xl w-full mx-auto flex flex-col gap-2">
+                <!-- Главные кнопки оценки знания (запускают ту же анимацию улёта влево/вправо) -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button id="btn-fc-review" class="py-3.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <span>👈 ⭐</span> <span>Повторить</span>
+                    </button>
+                    <button id="btn-fc-known" class="py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-extrabold text-sm sm:text-base transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <span>✅</span> <span>Знаю! 👉</span>
+                    </button>
+                </div>
+                <!-- Кнопки простого перелистывания без смены статуса -->
+                <div class="grid grid-cols-2 gap-2.5">
+                    <button id="btn-fc-prev" class="py-2.5 px-4 rounded-xl bg-white border border-slate-300 font-bold text-xs sm:text-sm text-slate-700 hover:bg-slate-100 active:scale-[0.98] transition flex items-center justify-center gap-1.5 shadow-sm">
+                        ← Предыдущая
+                    </button>
+                    <button id="btn-fc-next" class="py-2.5 px-4 rounded-xl bg-white border border-slate-300 font-bold text-xs sm:text-sm text-slate-700 hover:bg-slate-100 active:scale-[0.98] transition flex items-center justify-center gap-1.5 shadow-sm">
+                        Пропустить →
+                    </button>
+                </div>
             </div>
         </section>
 
         <!-- ==================== РЕЖИМ 2: ТЕСТОВЫЙ ТРЕНАЖЁР ==================== -->
-        <section id="view-quiz" class="hidden flex-1 flex flex-col gap-4">
-            <div class="bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-3">
-                    <span id="quiz-counter" class="text-sm font-bold text-indigo-950 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-lg">
-                        Вопрос 1 из 414
+        <section id="view-quiz" class="hidden flex-1 flex flex-col gap-3">
+            <div class="bg-white px-3 py-2 sm:px-4 sm:py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span id="quiz-counter" class="text-xs sm:text-sm font-extrabold text-indigo-950 bg-indigo-50 border border-indigo-200 px-2.5 py-1 rounded-lg">
+                        1 / 414
                     </span>
-                    <span id="quiz-score" class="text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg">
+                    <span id="quiz-score" class="text-xs sm:text-sm font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
                         Верно: 0 / 0 (0%)
                     </span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <button id="btn-quiz-shuffle" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                        🔀 Случайный порядок
+                <div class="flex items-center gap-1.5">
+                    <button id="btn-quiz-shuffle" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        🔀 Случ.
                     </button>
-                    <button id="btn-quiz-reset-score" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
-                        Сбросить счёт теста
+                    <button id="btn-quiz-reset-score" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+                        Сброс счёта
                     </button>
                 </div>
             </div>
 
-            <div class="max-w-3xl w-full mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-7 flex flex-col gap-5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-2">
-                        <span id="quiz-q-id" class="px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs">Вопрос #1</span>
-                        <span id="quiz-q-block" class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs">Блок 1</span>
+            <div class="max-w-3xl w-full mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-7 flex flex-col gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <span id="quiz-q-id" class="px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-900 font-bold text-xs shrink-0">Вопрос #1</span>
+                        <span id="quiz-q-block" class="px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-medium text-xs truncate">Блок 1</span>
                     </div>
-                    <div id="quiz-q-badges" class="flex gap-1.5"></div>
+                    <div id="quiz-q-badges" class="flex gap-1"></div>
                 </div>
 
                 <h2 id="quiz-q-text" class="text-base sm:text-xl font-bold text-slate-800 leading-snug"></h2>
                 <p id="quiz-q-instruction" class="text-xs font-semibold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit">Выберите 1 правильный ответ</p>
 
                 <!-- Варианты ответа -->
-                <div id="quiz-options" class="grid grid-cols-1 gap-2.5">
+                <div id="quiz-options" class="grid grid-cols-1 gap-2">
                     <!-- Генерируется через JS -->
                 </div>
 
                 <!-- Кнопка подтверждения для вопросов с несколькими правильными ответами -->
                 <div id="quiz-multi-submit-wrap" class="hidden">
-                    <button id="btn-quiz-submit-multi" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition text-sm">
+                    <button id="btn-quiz-submit-multi" class="w-full sm:w-auto px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold rounded-xl shadow-sm transition text-sm">
                         Подтвердить выбранные ответы ✓
                     </button>
                 </div>
 
                 <!-- Блок обратной связи после ответа -->
-                <div id="quiz-feedback" class="hidden p-4 rounded-xl border text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div id="quiz-feedback" class="hidden p-3.5 sm:p-4 rounded-xl border text-xs sm:text-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div id="quiz-feedback-text" class="font-medium leading-snug"></div>
-                    <button id="btn-quiz-next" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shrink-0 transition shadow-sm">
-                        Следующий вопрос ➡️
+                    <button id="btn-quiz-next" class="w-full sm:w-auto px-5 py-3 bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white font-bold rounded-xl shrink-0 transition shadow-sm text-sm">
+                        Следующий вопрос →
                     </button>
                 </div>
             </div>
         </section>
 
-        <!-- ==================== РЕЖИМ 3: ПОЛНЫЙ СПИСОК (ШПАРГАЛКА) ==================== -->
+        <!-- ==================== РЕЖИМ 3: ПОЛНЫЙ СПИСОК (ШПАРГАЛКА С ПОРЦИОННОЙ ЗАГРУЗКОЙ) ==================== -->
         <section id="view-list" class="hidden flex-1 flex flex-col gap-3">
-            <div class="bg-white px-4 py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
-                <div class="text-sm font-bold text-slate-700">
-                    Отображается вопросов: <span id="list-count" class="text-indigo-600">414</span>
+            <div class="bg-white px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+                <div class="text-xs sm:text-sm font-bold text-slate-700">
+                    Найдено вопросов: <span id="list-count" class="text-indigo-600">414</span>
                 </div>
                 <label class="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-700 cursor-pointer select-none bg-slate-100 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition">
                     <input id="toggle-blur-answers" type="checkbox" class="rounded text-indigo-600 focus:ring-indigo-500">
-                    <span>Скрыть ответы для самопроверки (клик по ответу — показать)</span>
+                    <span>Скрыть ответы (клик — показать)</span>
                 </label>
             </div>
 
             <div id="list-container" class="flex flex-col gap-2.5">
-                <!-- Генерируется через JS -->
+                <!-- Генерируется через JS порциями по 50 шт. для мгновенного отклика на телефонах -->
+            </div>
+
+            <div id="list-load-more-wrap" class="hidden py-2 flex justify-center">
+                <button id="btn-list-load-more" class="w-full sm:w-auto px-6 py-3 bg-white hover:bg-slate-50 text-indigo-700 font-bold text-sm rounded-xl border border-slate-300 shadow-sm transition">
+                    Показать ещё вопросы
+                </button>
             </div>
         </section>
 
@@ -560,16 +683,16 @@
 
     <!-- Модальное окно подтверждения сброса прогресса -->
     <div id="reset-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border border-slate-200">
-            <h3 class="text-lg font-bold text-slate-900">Сбросить весь прогресс обучения?</h3>
-            <p class="text-sm text-slate-600 mt-2">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-xl border border-slate-200">
+            <h3 class="text-base sm:text-lg font-bold text-slate-900">Сбросить весь прогресс обучения?</h3>
+            <p class="text-xs sm:text-sm text-slate-600 mt-2">
                 Все отметки «Знаю» и «Повторить» для 414 вопросов будут обнулены. Это действие нельзя отменить.
             </p>
             <div class="mt-5 flex justify-end gap-2.5">
-                <button id="btn-cancel-reset" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">
+                <button id="btn-cancel-reset" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-semibold transition">
                     Отмена
                 </button>
-                <button id="btn-confirm-reset" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition">
+                <button id="btn-confirm-reset" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-semibold transition">
                     Да, сбросить
                 </button>
             </div>
@@ -590,8 +713,6 @@
         ];
 
         // Единая выверенная база из 414 отдельных вопросов первичной аккредитации СПО «Сестринское дело»
-        // Каждый вопрос имеет собственный набор вариантов ответа (разделитель ~).
-        // Варианты, начинающиеся со знака *, являются правильными (если таких вариантов >= 2, вопрос автоматически работает в режиме множественного выбора с чекбоксами).
         const RAW_QUESTIONS_DATA = `
 1|1|Начало организованной женской помощи в России связано с преобразованиями Петра I, когда вышел указ о службе женщин в:|*госпиталях~воспитательных домах~приютах для «бедных вдов»~общинах сестёр милосердия
 2|1|Год появления приютов для «бедных вдов»:|*1803~1818~1715~1812
@@ -615,7 +736,7 @@
 20|1|Количество уровней в иерархии основных жизненно важных потребностей по А. Маслоу:|*5~10~14~3
 21|1|Фундаментальным основанием, формирующим медицинскую профессию, является:|*моральное~материальное~экономическое~познавательное~территориальное
 22|1|Основным принципом современной модели профессиональной этики является:|*Приоритет прав и уважения достоинства пациента~Принцип приоритета науки~Принцип безусловного исполнения приказов~Принцип патернализма
-23|1|Отличительным признаком профессиональной этики медицинских работников является:|*Осознанный выбор правил поведения~Право на поведение, отклонённое от нормы~Приоритет медицинской науки над интересами пациентов~Корпоративная закрытость
+23|1|Отличительным признаком профессиональной этики медицинских работников является:|*Осознанный выбор правил поведения~Право на поведение, отклонённое от нормы~Принцит медицинской науки над интересами пациентов~Корпоративная закрытость
 24|1|Этика сестринского дела изучает:|*Особенности развития и зависимости морального поведения медицинской сестры от условий её практической деятельности~Отношения между членами коллектива и родственниками пациентов~Комплекс медицинских услуг, направленных на восстановление здоровья пациента~Правовые нормы оплаты труда медработников
 25|1|Понятие этики сестринского дела включает в себя:|*Научный раздел, включающий в себя этические и нравственные аспекты деятельности работников здравоохранения~Представление об оптимальной технической деятельности медицинских работников~Достижения в области современной клинической медицины~Свод правил внутреннего трудового распорядка
 26|1|К категориям этики сестринского дела относятся:|*Совесть, смысл жизни, долг, такт, достоинство, честь~Делай благо, делай добро~Меры равенства и неравенства~Презумпция невиновности и правоспособность
@@ -694,7 +815,7 @@
 99|3|Противопедикулёзные мероприятия в медучреждении осуществляет:|*Медицинский персонал~Врач приёмного отделения лично~Сам пациент~Родственники пациента
 100|3|В случае обнаружения педикулёза на титульном листе медицинской карты стационарного больного ставят обозначение:|*«P»~«B»~«B-20»~«A»
 101|3|В случае обнаружения педикулёза отметка «P» ставится:|*На титульном листе медицинской карты стационарного больного~В листе врачебных назначений~В температурном листе~В порционном требовании
-102|3|При выявлении педикулёза медицинская сестра заполняет:|*Экстренное извещение об инфекционном заболевании~Статистическую карту выбывшего из стационара~Журнал учёта амбулаторных больных~Листок нетрудоспособности
+102|3|При выявлении педикулёза медицинская сестра заполняет:|*Экстренное извещение об инфекционном заболевании~Статистическую карта выбывшего из стационара~Журнал учёта амбулаторных больных~Листок нетрудоспособности
 103|3|Для обработки волосистой части головы при обнаружении педикулёза используется:|*Лосьон «Ниттифор»~Раствор глюкозы~Раствор фурацилина~Порошок гидрокарбоната натрия
 104|3|К средствам для обработки волосистой части головы при педикулёзе относят:|*Шампуни «Медифокс», «Ниттифор», лосьон «Анти-бит»~3% раствор перекиси водорода и фурацилин~Раствор хлоргексидина и мирамистин~Мазь Вишневского и пасту Лассара
 105|3|Вид транспортировки пациента в отделение определяет:|*Врач в соответствии с состоянием больного~Врач в соответствии с пожеланием больного~Медицинская сестра в соответствии с самочувствием больного~Медицинская сестра в соответствии с состоянием больного
@@ -1046,8 +1167,10 @@
             };
         });
 
-        // Состояние приложения
+        // Состояние приложения (полная совместимость ключей localStorage)
         const STORAGE_KEY = 'spo_nursing_414_authentic_v5';
+        const QUIZ_STATS_KEY = 'spo_nursing_414_quiz_stats_v5';
+
         let progressMap = {}; // { [id]: 'known' | 'review' }
         let currentMode = 'flashcards'; // 'flashcards' | 'quiz' | 'exam' | 'list'
         let activeBlock = 'all'; // 'all' or 1..7
@@ -1057,6 +1180,12 @@
         let filteredQuestions = [...ALL_QUESTIONS];
         let fcIndex = 0;
         let isCardFlipped = false;
+        let isCardAnimating = false;
+        let fcHistoryStack = []; // Стек для отмены свайпа: [{ id, prevStatus, prevIndex }]
+
+        // Порционная отрисовка для режима «База знаний (414)»
+        const LIST_BATCH_SIZE = 50;
+        let listVisibleLimit = LIST_BATCH_SIZE;
 
         // Состояние для тестового тренажёра (Режим 2)
         let quizIndex = 0;
@@ -1069,8 +1198,8 @@
         // ==================== СОСТОЯНИЕ ЭКЗАМЕНА (80 ВОПРОСОВ / 60 МИНУТ) ====================
         let examQuestions = [];
         let examCurrentIdx = 0;
-        let examUserAnswers = {}; // Для single: number; для multi: array of indices [0, 2]
-        let examMultiConfirmed = {}; // Для обучающего режима экзамена с несколькими ответами
+        let examUserAnswers = {};
+        let examMultiConfirmed = {};
         let examFlagged = {};
         let examModeType = 'strict';
         let examTimeLeft = 60 * 60;
@@ -1079,8 +1208,6 @@
         let examIsPaused = false;
         let examIsActive = false;
         let examReviewFilter = 'mistakes';
-
-        const QUIZ_STATS_KEY = 'spo_nursing_414_quiz_stats_v5';
 
         function updateQuizScoreUI() {
             const el = document.getElementById('quiz-score');
@@ -1110,27 +1237,6 @@
                 quizTotalAnswered = 0;
             }
             updateQuizScoreUI();
-
-            // Сохранение обнуления только при нажатии кнопок сброса
-            const btnQuizReset = document.getElementById('btn-quiz-reset-score');
-            if (btnQuizReset && !btnQuizReset.dataset.boundSave) {
-                btnQuizReset.dataset.boundSave = 'true';
-                btnQuizReset.addEventListener('click', () => {
-                    quizCorrectCount = 0;
-                    quizTotalAnswered = 0;
-                    saveProgress();
-                });
-            }
-
-            const btnConfirmReset = document.getElementById('btn-confirm-reset');
-            if (btnConfirmReset && !btnConfirmReset.dataset.boundSave) {
-                btnConfirmReset.dataset.boundSave = 'true';
-                btnConfirmReset.addEventListener('click', () => {
-                    quizCorrectCount = 0;
-                    quizTotalAnswered = 0;
-                    saveProgress();
-                });
-            }
         }
 
         function saveProgress() {
@@ -1180,9 +1286,15 @@
         // Инициализация кнопок фильтрации по блокам
         function renderBlockButtons() {
             const container = document.getElementById('block-filters');
+            const indicator = document.getElementById('active-block-indicator');
             if (!container) return;
+
+            if (indicator) {
+                indicator.textContent = activeBlock === 'all' ? 'Все' : `Блок ${activeBlock}`;
+            }
+
             let html = `
-                <button data-block="all" class="block-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition ${activeBlock === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                <button data-block="all" class="block-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${activeBlock === 'all' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
                     Все блоки (${ALL_QUESTIONS.length})
                 </button>
             `;
@@ -1191,7 +1303,7 @@
                 const count = ALL_QUESTIONS.filter(q => q.blockId === b.id).length;
                 const isActive = activeBlock === b.id;
                 html += `
-                    <button data-block="${b.id}" class="block-btn px-3 py-1.5 rounded-xl text-xs font-semibold transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+                    <button data-block="${b.id}" class="block-btn shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${isActive ? 'bg-indigo-600 text-white shadow-sm' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}">
                         ${b.short} (${count})
                     </button>
                 `;
@@ -1234,18 +1346,43 @@
             });
 
             const elFilteredCount = document.getElementById('filtered-count-label');
+            const elMobileFiltered = document.getElementById('mobile-filtered-count');
             if (elFilteredCount) elFilteredCount.textContent = `Выбрано: ${filteredQuestions.length} вопр.`;
+            if (elMobileFiltered) elMobileFiltered.textContent = `Выбрано: ${filteredQuestions.length}`;
 
             fcIndex = 0;
             quizIndex = 0;
+            listVisibleLimit = LIST_BATCH_SIZE;
             isCardFlipped = false;
 
             renderActiveView();
         }
 
+        // Обновление подсветки табов (и мобильного нижнего бара, и десктопного переключателя)
+        function syncModeTabsUI() {
+            document.querySelectorAll('.mode-tab').forEach(tab => {
+                const tabMode = tab.getAttribute('data-mode');
+                const isMobileTab = tab.parentElement && tab.parentElement.classList.contains('grid-cols-4') && tab.closest('nav');
+                if (isMobileTab) {
+                    if (tabMode === currentMode) {
+                        tab.className = 'mode-tab flex flex-col items-center justify-center gap-0.5 text-indigo-600 font-extrabold transition bg-indigo-50/70';
+                    } else {
+                        tab.className = 'mode-tab flex flex-col items-center justify-center gap-0.5 text-slate-500 font-medium transition';
+                    }
+                } else {
+                    if (tabMode === currentMode) {
+                        tab.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm';
+                    } else {
+                        tab.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60';
+                    }
+                }
+            });
+        }
+
         // Отрисовка текущего выбранного режима
         function renderActiveView() {
             const emptyState = document.getElementById('empty-state');
+            const controlBarSection = document.getElementById('control-bar-section');
             const filtersPanel = document.getElementById('global-filters-panel');
             const viewExam = document.getElementById('view-exam');
             const viewFc = document.getElementById('view-flashcards');
@@ -1257,14 +1394,19 @@
             viewQuiz.classList.add('hidden');
             viewList.classList.add('hidden');
 
+            syncModeTabsUI();
+
             if (currentMode === 'exam') {
                 emptyState.classList.add('hidden');
                 filtersPanel.classList.add('hidden');
                 filtersPanel.classList.remove('flex');
+                // На мобильных в режиме экзамена скрываем всю пустую секцию фильтров
+                controlBarSection.classList.add('hidden', 'sm:flex');
                 viewExam.classList.remove('hidden');
                 return;
             }
 
+            controlBarSection.classList.remove('hidden', 'sm:flex');
             filtersPanel.classList.remove('hidden');
             filtersPanel.classList.add('flex');
 
@@ -1380,9 +1522,9 @@
             display.textContent = formatted;
 
             if (examTimeLeft < 300) {
-                box.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-rose-600 text-white font-mono font-bold text-sm sm:text-base animate-pulse';
+                box.className = 'flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-rose-600 text-white font-mono font-bold text-xs sm:text-base animate-pulse';
             } else {
-                box.className = 'flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-sm sm:text-base';
+                box.className = 'flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-mono font-bold text-xs sm:text-base';
             }
         }
 
@@ -1391,8 +1533,11 @@
             const currentQ = examQuestions[examCurrentIdx];
             const answeredCount = examQuestions.filter((_, idx) => hasUserAnsweredQuestion(examUserAnswers[idx])).length;
 
-            document.getElementById('exam-q-counter').textContent = `Вопрос ${examCurrentIdx + 1} из ${total}`;
+            document.getElementById('exam-q-counter').textContent = `${examCurrentIdx + 1} / ${total}`;
             document.getElementById('exam-answered-counter').textContent = `Отвечено: ${answeredCount} / ${total}`;
+            const mobileGridLabel = document.getElementById('exam-mobile-grid-label');
+            if (mobileGridLabel) mobileGridLabel.textContent = `Сетка (${answeredCount}/${total})`;
+
             document.getElementById('exam-q-bank-id').textContent = `Вопрос #${currentQ.id}`;
             document.getElementById('exam-q-block').textContent = `Блок ${currentQ.blockId}: ${currentQ.blockName}`;
             document.getElementById('exam-q-text').textContent = currentQ.question;
@@ -1408,7 +1553,7 @@
 
             let badgesHtml = '';
             if (currentQ.isMulti) {
-                badgesHtml += `<span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-bold text-xs">🔢 Несколько ответов</span>`;
+                badgesHtml += `<span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-bold text-xs">🔢 Несколько</span>`;
             }
             document.getElementById('exam-q-badges').innerHTML = badgesHtml;
 
@@ -1416,10 +1561,10 @@
             const flagBtn = document.getElementById('btn-exam-flag');
             const flagLabel = document.getElementById('exam-flag-label');
             if (isFlagged) {
-                flagBtn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-amber-100 border border-amber-400 text-amber-900 transition flex items-center gap-1';
+                flagBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-100 border border-amber-400 text-amber-900 transition flex items-center gap-1';
                 flagLabel.textContent = 'Отмечено';
             } else {
-                flagBtn.className = 'px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1';
+                flagBtn.className = 'px-2.5 py-1 rounded-lg text-xs font-bold border border-slate-200 text-slate-600 hover:bg-amber-50 hover:text-amber-800 transition flex items-center gap-1';
                 flagLabel.textContent = 'На проверку';
             }
 
@@ -1464,8 +1609,8 @@
                 }
 
                 return `
-                    <button data-opt-idx="${oIdx}" class="exam-opt-btn w-full text-left p-4 rounded-xl border-2 transition flex items-start gap-3 ${btnStyle}">
-                        <span class="w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
+                    <button data-opt-idx="${oIdx}" class="exam-opt-btn w-full text-left p-3.5 sm:p-4 rounded-xl border-2 transition flex items-start gap-3 active:scale-[0.99] ${btnStyle}">
+                        <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
                         <span class="text-sm sm:text-base font-medium leading-snug">${opt.text}</span>
                     </button>
                 `;
@@ -1544,7 +1689,14 @@
             gridContainer.querySelectorAll('.exam-grid-btn').forEach(b => {
                 b.addEventListener('click', () => {
                     examCurrentIdx = parseInt(b.getAttribute('data-nav-idx'), 10);
+                    // Закрываем мобильное окно сетки при выборе вопроса
+                    const gridWrap = document.getElementById('exam-grid-wrapper');
+                    gridWrap.classList.add('hidden');
+                    gridWrap.classList.remove('flex');
                     renderExamState();
+                    if (window.innerWidth < 640) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                 });
             });
         }
@@ -1589,17 +1741,17 @@
             const verdictSubtitle = document.getElementById('exam-verdict-subtitle');
 
             if (isPassed) {
-                verdictCard.className = 'rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5 bg-emerald-50 border-emerald-400 text-emerald-950';
-                verdictBadge.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-600 text-white w-fit';
+                verdictCard.className = 'rounded-2xl p-5 sm:p-8 border-2 shadow-sm flex flex-col gap-4 bg-emerald-50 border-emerald-400 text-emerald-950';
+                verdictBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-emerald-600 text-white w-fit';
                 verdictBadge.textContent = '✅ ТЕСТ СДАН (Аккредитация пройдена)';
                 verdictTitle.textContent = `Отличный результат: ${correct} из ${total}!`;
                 verdictSubtitle.textContent = `Вы набрали проходной балл (необходимо минимум ${passThreshold} из ${total}, то есть ≥ 87.5% правильных ответов).`;
             } else {
-                verdictCard.className = 'rounded-2xl p-6 sm:p-8 border-2 shadow-sm flex flex-col gap-5 bg-rose-50 border-rose-400 text-rose-950';
-                verdictBadge.className = 'inline-flex items-center gap-2 px-3.5 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-600 text-white w-fit';
+                verdictCard.className = 'rounded-2xl p-5 sm:p-8 border-2 shadow-sm flex flex-col gap-4 bg-rose-50 border-rose-400 text-rose-950';
+                verdictBadge.className = 'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-rose-600 text-white w-fit';
                 verdictBadge.textContent = '❌ ТЕСТ НЕ СДАН (Ниже порога 70/80)';
                 verdictTitle.textContent = `Набрано ${correct} из ${total} баллов`;
-                verdictSubtitle.textContent = `Для успешной сдачи аккредитации СПО необходимо минимум ${passThreshold} из ${total} правильных ответов (не хватило ${passThreshold - correct} балл.). Все ошибки автоматически добавлены в раздел «Повторить».`;
+                verdictSubtitle.textContent = `Для сдачи аккредитации СПО необходимо минимум ${passThreshold} из ${total} правильных ответов (не хватило ${passThreshold - correct} балл.). Все ошибки автоматически добавлены в «Повторить».`;
             }
 
             document.getElementById('exam-res-score').textContent = `${correct} / ${total}`;
@@ -1608,6 +1760,7 @@
 
             examReviewFilter = correct === total ? 'all' : 'mistakes';
             renderExamReviewList();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function renderExamReviewList() {
@@ -1641,7 +1794,7 @@
 
             if (itemsToRender.length === 0) {
                 container.innerHTML = `
-                    <div class="p-8 text-center text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200 font-bold">
+                    <div class="p-6 text-center text-emerald-700 bg-emerald-50 rounded-xl border border-emerald-200 font-bold text-sm">
                         🎉 Ни одной ошибки! Вы ответили правильно на все вопросы билета.
                     </div>
                 `;
@@ -1649,10 +1802,10 @@
             }
 
             container.innerHTML = itemsToRender.map(item => `
-                <div class="p-4 rounded-xl border ${item.isRight ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-300 bg-rose-50/40'} flex flex-col gap-2">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-xs">Билет №${item.ticketNum} (Вопрос #${item.id})</span>
+                <div class="p-3.5 sm:p-4 rounded-xl border ${item.isRight ? 'border-emerald-200 bg-emerald-50/30' : 'border-rose-300 bg-rose-50/40'} flex flex-col gap-2">
+                    <div class="flex flex-wrap items-center justify-between gap-1.5">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-xs">№${item.ticketNum} (#${item.id})</span>
                             <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium text-xs">Блок ${item.blockId}</span>
                             ${item.isMulti ? '<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-xs">Несколько ответов</span>' : ''}
                         </div>
@@ -1670,6 +1823,42 @@
         }
 
         // ==================== ЛОГИКА РЕЖИМА: ФЛЕШ-КАРТОЧКИ (КВИЗЛЕТ) ====================
+        function resetDragLayerVisuals() {
+            const dragLayer = document.getElementById('flashcard-drag-layer');
+            const badgeKnow = document.getElementById('swipe-badge-know');
+            const badgeReview = document.getElementById('swipe-badge-review');
+            const frontFace = document.getElementById('fc-front-face');
+            const stackBg = document.getElementById('flashcard-stack-bg');
+
+            if (dragLayer) {
+                dragLayer.classList.remove('drag-spring-return', 'drag-fly-out');
+                dragLayer.style.transform = 'translate3d(0px, 0px, 0px) rotate(0deg)';
+                dragLayer.style.opacity = '1';
+            }
+            if (badgeKnow) {
+                badgeKnow.style.opacity = '0';
+                badgeKnow.style.transform = 'rotate(-12deg) scale(0.85)';
+            }
+            if (badgeReview) {
+                badgeReview.style.opacity = '0';
+                badgeReview.style.transform = 'rotate(12deg) scale(0.85)';
+            }
+            if (frontFace) {
+                frontFace.classList.remove('border-emerald-400', 'border-amber-400', 'bg-emerald-50/20', 'bg-amber-50/20');
+                frontFace.classList.add('border-slate-200');
+            }
+            if (stackBg) {
+                stackBg.style.transform = 'scale(0.95) translateY(8px)';
+                stackBg.style.opacity = '0.7';
+            }
+        }
+
+        function updateUndoButtonUI() {
+            const undoBtn = document.getElementById('btn-fc-undo');
+            if (!undoBtn) return;
+            undoBtn.disabled = fcHistoryStack.length === 0;
+        }
+
         function renderFlashcard() {
             if (filteredQuestions.length === 0) return;
             if (fcIndex >= filteredQuestions.length) fcIndex = 0;
@@ -1677,10 +1866,20 @@
 
             const item = filteredQuestions[fcIndex];
             const inner = document.getElementById('flashcard-inner');
+            const frontFace = document.getElementById('fc-front-face');
+            const backFace = document.getElementById('fc-back-face');
+
             isCardFlipped = false;
             inner.classList.remove('flipped');
+            if (frontFace && backFace) {
+                frontFace.classList.remove('pointer-events-none');
+                backFace.classList.add('pointer-events-none');
+            }
 
-            document.getElementById('fc-counter').textContent = `Карточка ${fcIndex + 1} из ${filteredQuestions.length}`;
+            resetDragLayerVisuals();
+            updateUndoButtonUI();
+
+            document.getElementById('fc-counter').textContent = `${fcIndex + 1} / ${filteredQuestions.length}`;
             document.getElementById('fc-q-id').textContent = `Вопрос #${item.id}`;
             document.getElementById('fc-a-id').textContent = `Правильный ответ • #${item.id}`;
             document.getElementById('fc-q-block').textContent = `Блок ${item.blockId}: ${item.blockName}`;
@@ -1688,44 +1887,146 @@
             const status = progressMap[item.id];
             const statusBadge = document.getElementById('fc-status-badge');
             if (status === 'known') {
-                statusBadge.textContent = '✅ Изучено («Знаю»)';
-                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800';
+                statusBadge.textContent = '✅ Изучено';
+                statusBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-1 rounded-lg bg-emerald-100 text-emerald-800 truncate';
             } else if (status === 'review') {
-                statusBadge.textContent = '⭐ В избранном / Повторить';
-                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800';
+                statusBadge.textContent = '⭐ Повторить';
+                statusBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-1 rounded-lg bg-amber-100 text-amber-800 truncate';
             } else {
-                statusBadge.textContent = '🆕 Не изучено';
-                statusBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600';
+                statusBadge.textContent = '🆕 Новая';
+                statusBadge.className = 'text-[11px] sm:text-xs font-semibold px-2 py-1 rounded-lg bg-slate-100 text-slate-600 truncate';
             }
 
             let badgesHtml = '';
             if (item.isMulti) {
-                badgesHtml += `<span class="px-2.5 py-1 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 font-bold text-xs">🔢 Несколько ответов</span>`;
+                badgesHtml += `<span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-900 border border-purple-300 font-bold text-xs">🔢 Несколько</span>`;
             }
             document.getElementById('fc-q-badges').innerHTML = badgesHtml;
 
             document.getElementById('fc-q-text').textContent = item.question;
             document.getElementById('fc-a-text').textContent = item.answer;
             document.getElementById('fc-a-note').classList.add('hidden');
+
+            // Предпросмотр следующей карточки на нижнем слое стопки
+            const stackBg = document.getElementById('flashcard-stack-bg');
+            if (filteredQuestions.length > 1) {
+                const nextIdx = (fcIndex + 1) % filteredQuestions.length;
+                const nextItem = filteredQuestions[nextIdx];
+                stackBg.classList.remove('hidden');
+                document.getElementById('fc-next-preview-id').textContent = `Вопрос #${nextItem.id}`;
+                document.getElementById('fc-next-preview-text').textContent = nextItem.question;
+            } else {
+                stackBg.classList.add('hidden');
+            }
         }
 
         function flipCard() {
+            if (isCardAnimating) return;
             isCardFlipped = !isCardFlipped;
             const inner = document.getElementById('flashcard-inner');
-            if (isCardFlipped) inner.classList.add('flipped');
-            else inner.classList.remove('flipped');
+            const frontFace = document.getElementById('fc-front-face');
+            const backFace = document.getElementById('fc-back-face');
+
+            if (isCardFlipped) {
+                inner.classList.add('flipped');
+                frontFace?.classList.add('pointer-events-none');
+                backFace?.classList.remove('pointer-events-none');
+            } else {
+                inner.classList.remove('flipped');
+                frontFace?.classList.remove('pointer-events-none');
+                backFace?.classList.add('pointer-events-none');
+            }
+        }
+
+        // Анимированный улёт карточки влево («Повторить») или вправо («Знаю!»)
+        function animateSwipeDecision(status) {
+            if (filteredQuestions.length === 0 || isCardAnimating) return;
+            isCardAnimating = true;
+
+            const isRight = status === 'known';
+            const dragLayer = document.getElementById('flashcard-drag-layer');
+            const badgeKnow = document.getElementById('swipe-badge-know');
+            const badgeReview = document.getElementById('swipe-badge-review');
+            const stackBg = document.getElementById('flashcard-stack-bg');
+
+            if (isRight && badgeKnow) {
+                badgeKnow.style.opacity = '1';
+                badgeKnow.style.transform = 'rotate(-12deg) scale(1.05)';
+            } else if (!isRight && badgeReview) {
+                badgeReview.style.opacity = '1';
+                badgeReview.style.transform = 'rotate(12deg) scale(1.05)';
+            }
+
+            if (stackBg) {
+                stackBg.style.transform = 'scale(1) translateY(0px)';
+                stackBg.style.opacity = '1';
+            }
+
+            const flyX = isRight ? Math.max(window.innerWidth * 0.85, 340) : -Math.max(window.innerWidth * 0.85, 340);
+            const flyRot = isRight ? 18 : -18;
+
+            dragLayer.classList.remove('drag-spring-return');
+            dragLayer.classList.add('drag-fly-out');
+            dragLayer.style.transform = `translate3d(${flyX}px, 24px, 0px) rotate(${flyRot}deg)`;
+            dragLayer.style.opacity = '0';
+
+            setTimeout(() => {
+                markCurrentFlashcard(status);
+                isCardAnimating = false;
+            }, 250);
         }
 
         function markCurrentFlashcard(status) {
             if (filteredQuestions.length === 0) return;
             const item = filteredQuestions[fcIndex];
+
+            // Сохраняем действие в стек отмены
+            fcHistoryStack.push({
+                id: item.id,
+                prevStatus: progressMap[item.id] || null,
+                prevIndex: fcIndex
+            });
+            if (fcHistoryStack.length > 30) fcHistoryStack.shift();
+
             progressMap[item.id] = status;
             saveProgress();
 
-            if (fcIndex < filteredQuestions.length - 1) {
-                fcIndex++;
+            // Если включён фильтр по статусу (например, «Неизученные»), обновляем список, иначе переходим к следующей
+            if (activeStatus !== 'all' && activeStatus !== 'multi') {
+                const prevIdx = fcIndex;
+                applyFilters();
+                if (filteredQuestions.length > 0) {
+                    fcIndex = Math.min(prevIdx, filteredQuestions.length - 1);
+                    renderFlashcard();
+                }
             } else {
-                fcIndex = 0;
+                if (fcIndex < filteredQuestions.length - 1) {
+                    fcIndex++;
+                } else {
+                    fcIndex = 0;
+                }
+                renderFlashcard();
+            }
+        }
+
+        function undoLastFlashcardAction() {
+            if (fcHistoryStack.length === 0 || isCardAnimating) return;
+            const last = fcHistoryStack.pop();
+            if (last.prevStatus === null) {
+                delete progressMap[last.id];
+            } else {
+                progressMap[last.id] = last.prevStatus;
+            }
+            saveProgress();
+
+            if (activeStatus !== 'all' && activeStatus !== 'multi') {
+                applyFilters();
+            }
+            const foundIdx = filteredQuestions.findIndex(q => q.id === last.id);
+            if (foundIdx !== -1) {
+                fcIndex = foundIdx;
+            } else if (last.prevIndex < filteredQuestions.length) {
+                fcIndex = last.prevIndex;
             }
             renderFlashcard();
         }
@@ -1740,7 +2041,7 @@
             const item = filteredQuestions[quizIndex];
             quizCurrentOptions = getShuffledQuestionOptions(item);
 
-            document.getElementById('quiz-counter').textContent = `Вопрос ${quizIndex + 1} из ${filteredQuestions.length}`;
+            document.getElementById('quiz-counter').textContent = `${quizIndex + 1} / ${filteredQuestions.length}`;
             document.getElementById('quiz-q-id').textContent = `Вопрос #${item.id}`;
             document.getElementById('quiz-q-block').textContent = `Блок ${item.blockId}: ${item.blockName}`;
             document.getElementById('quiz-q-text').textContent = item.question;
@@ -1748,7 +2049,7 @@
             const instrEl = document.getElementById('quiz-q-instruction');
             const submitWrap = document.getElementById('quiz-multi-submit-wrap');
             if (item.isMulti) {
-                instrEl.textContent = '☑ Выберите несколько правильных ответов и нажмите «Подтвердить выбранные ответы»';
+                instrEl.textContent = '☑ Выберите несколько ответов и нажмите «Подтвердить»';
                 instrEl.className = 'text-xs font-bold text-purple-800 bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-lg w-fit';
                 submitWrap.classList.remove('hidden');
             } else {
@@ -1759,7 +2060,7 @@
 
             let badgesHtml = '';
             if (item.isMulti) {
-                badgesHtml += `<span class="px-2.5 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-semibold text-xs">🔢 Несколько ответов</span>`;
+                badgesHtml += `<span class="px-2 py-0.5 rounded-lg bg-purple-100 text-purple-800 font-semibold text-xs">🔢 Несколько</span>`;
             }
             document.getElementById('quiz-q-badges').innerHTML = badgesHtml;
 
@@ -1791,8 +2092,8 @@
                 }
 
                 return `
-                    <button data-opt-idx="${idx}" class="quiz-opt-btn w-full text-left p-4 rounded-xl border-2 transition flex items-start gap-3 ${btnStyle}">
-                        <span class="w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
+                    <button data-opt-idx="${idx}" class="quiz-opt-btn w-full text-left p-3.5 sm:p-4 rounded-xl border-2 transition flex items-start gap-3 active:scale-[0.99] ${btnStyle}">
+                        <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 ${badgeStyle}">${iconPrefix}</span>
                         <span class="text-sm sm:text-base font-medium leading-snug">${opt.text}</span>
                     </button>
                 `;
@@ -1842,9 +2143,6 @@
             }
             saveProgress();
 
-            const pct = Math.round((quizCorrectCount / quizTotalAnswered) * 100);
-            document.getElementById('quiz-score').textContent = `Верно: ${quizCorrectCount} / ${quizTotalAnswered} (${pct}%)`;
-
             renderQuizOptionsUI(item);
 
             const fb = document.getElementById('quiz-feedback');
@@ -1858,31 +2156,43 @@
                 fb.classList.add('bg-rose-50', 'border-rose-200', 'text-rose-900');
                 fbText.innerHTML = `❌ <b>Ошибка.</b> Вопрос добавлен в «Повторить». Правильный ответ: <b>${item.answer}</b>`;
             }
+
+            // На смартфонах плавно прокручиваем к блоку с результатом и кнопкой «Следующий вопрос»
+            if (window.innerWidth < 640) {
+                setTimeout(() => {
+                    fb.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 60);
+            }
         }
 
-        // ==================== ЛОГИКА РЕЖИМА: БАЗА ЗНАНИЙ (414) ====================
+        // ==================== ЛОГИКА РЕЖИМА: БАЗА ЗНАНИЙ (414) С ПОРЦИОННЫМ РЕНДЕРИНГОМ ====================
         function renderListView() {
             const container = document.getElementById('list-container');
+            const loadMoreWrap = document.getElementById('list-load-more-wrap');
+            const btnLoadMore = document.getElementById('btn-list-load-more');
             const blurEnabled = document.getElementById('toggle-blur-answers').checked;
             document.getElementById('list-count').textContent = filteredQuestions.length;
 
-            container.innerHTML = filteredQuestions.map(item => {
+            const visibleSlice = filteredQuestions.slice(0, listVisibleLimit);
+            const remaining = filteredQuestions.length - visibleSlice.length;
+
+            container.innerHTML = visibleSlice.map(item => {
                 const st = progressMap[item.id];
                 const isKnown = st === 'known';
                 const isReview = st === 'review';
 
                 return `
-                    <div class="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div id="list-card-${item.id}" class="bg-white rounded-xl p-3.5 sm:p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <div class="flex-1 space-y-1.5">
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span class="px-2 py-0.5 rounded bg-slate-800 text-white font-bold text-xs">#${item.id}</span>
-                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium text-xs">Блок ${item.blockId}: ${item.blockName}</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-medium text-xs">Блок ${item.blockId}</span>
                                 ${item.isMulti ? '<span class="px-2 py-0.5 rounded bg-purple-100 text-purple-900 font-bold text-xs">🔢 Несколько ответов</span>' : ''}
                             </div>
-                            <h3 class="font-bold text-slate-800 text-sm sm:text-base">${item.question}</h3>
-                            <div class="pt-1">
-                                <span class="text-xs font-semibold uppercase tracking-wider text-teal-700 mr-1">Правильный ответ:</span>
-                                <span onclick="this.classList.toggle('revealed')" class="text-sm sm:text-base font-semibold text-teal-900 bg-teal-50/80 px-2 py-0.5 rounded cursor-pointer ${blurEnabled ? 'blur-answer' : ''}">${item.answer}</span>
+                            <h3 class="font-bold text-slate-800 text-sm sm:text-base leading-snug">${item.question}</h3>
+                            <div class="pt-0.5">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-teal-700 mr-1">Ответ:</span>
+                                <span onclick="this.classList.toggle('revealed')" class="text-sm sm:text-base font-semibold text-teal-900 bg-teal-50/80 px-2 py-0.5 rounded cursor-pointer inline-block ${blurEnabled ? 'blur-answer' : ''}">${item.answer}</span>
                             </div>
                         </div>
 
@@ -1897,6 +2207,13 @@
                     </div>
                 `;
             }).join('');
+
+            if (remaining > 0) {
+                loadMoreWrap.classList.remove('hidden');
+                btnLoadMore.textContent = `Показать ещё (${Math.min(LIST_BATCH_SIZE, remaining)} из оставшихся ${remaining})`;
+            } else {
+                loadMoreWrap.classList.add('hidden');
+            }
         }
 
         window.setItemStatus = function(id, status) {
@@ -1906,7 +2223,13 @@
                 progressMap[id] = status;
             }
             saveProgress();
-            if (currentMode === 'list') renderListView();
+            if (currentMode === 'list') {
+                if (activeStatus !== 'all' && activeStatus !== 'multi') {
+                    applyFilters();
+                } else {
+                    renderListView();
+                }
+            }
         };
 
         // ==================== ОБРАБОТЧИКИ СОБЫТИЙ ====================
@@ -1916,16 +2239,20 @@
             renderBlockButtons();
             applyFilters();
 
-            // Переключение вкладок режимов
+            // Переключение вкладок режимов (работает и для нижнего таб-бара на телефоне, и для верхнего на ПК)
             document.querySelectorAll('.mode-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     currentMode = tab.getAttribute('data-mode');
-                    document.querySelectorAll('.mode-tab').forEach(t => {
-                        t.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 text-slate-700 hover:bg-white/60';
-                    });
-                    tab.className = 'mode-tab py-2.5 px-3 rounded-lg font-semibold text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm';
                     renderActiveView();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 });
+            });
+
+            // Сворачивание/разворачивание панели тематических блоков
+            const btnToggleBlocks = document.getElementById('btn-toggle-blocks');
+            const blocksDrawer = document.getElementById('blocks-drawer');
+            btnToggleBlocks.addEventListener('click', () => {
+                blocksDrawer.classList.toggle('hidden');
             });
 
             // Фильтры по статусу
@@ -1938,13 +2265,18 @@
                 });
             });
 
-            // Поиск
+            // Поиск с debounce (150 мс) для плавного ввода на смартфонах
             const searchInput = document.getElementById('search-input');
             const clearSearch = document.getElementById('clear-search');
+            let searchTimeout = null;
             searchInput.addEventListener('input', (e) => {
-                searchQuery = e.target.value;
-                clearSearch.classList.toggle('hidden', !searchQuery);
-                applyFilters();
+                const val = e.target.value;
+                clearSearch.classList.toggle('hidden', !val);
+                if (searchTimeout) clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchQuery = val;
+                    applyFilters();
+                }, 150);
             });
             clearSearch.addEventListener('click', () => {
                 searchInput.value = '';
@@ -1960,22 +2292,193 @@
                 searchQuery = '';
                 searchInput.value = '';
                 clearSearch.classList.add('hidden');
+                document.querySelectorAll('.status-filter').forEach(b => b.classList.remove('ring-2', 'ring-indigo-600', 'ring-offset-1'));
+                document.querySelector('.status-filter[data-status="all"]')?.classList.add('ring-2', 'ring-indigo-600', 'ring-offset-1');
                 renderBlockButtons();
                 applyFilters();
             });
 
-            // Управление флеш-карточками
-            document.getElementById('flashcard-container').addEventListener('click', flipCard);
+            // Кнопка «Показать ещё» в списке базы
+            document.getElementById('btn-list-load-more').addEventListener('click', () => {
+                listVisibleLimit += LIST_BATCH_SIZE;
+                renderListView();
+            });
+
+            // ==================== ИНТЕРАКТИВНЫЙ СВАЙП КАРТОЧЕК (КВИЗЛЕТ / TINDER STYLE) ====================
+            const fcContainer = document.getElementById('flashcard-container');
+            const dragLayer = document.getElementById('flashcard-drag-layer');
+            const badgeKnow = document.getElementById('swipe-badge-know');
+            const badgeReview = document.getElementById('swipe-badge-review');
+            const frontFace = document.getElementById('fc-front-face');
+            const stackBg = document.getElementById('flashcard-stack-bg');
+
+            const SWIPE_THRESHOLD = 80; // Порог в пикселях для срабатывания свайпа
+            let startX = 0;
+            let startY = 0;
+            let currentDx = 0;
+            let currentDy = 0;
+            let startTime = 0;
+            let isPointerDown = false;
+            let isDraggingHorizontally = false;
+            let isScrollingVertically = false;
+            let suppressNextClick = false;
+
+            function onPointerStart(clientX, clientY) {
+                if (isCardAnimating || filteredQuestions.length === 0) return;
+                startX = clientX;
+                startY = clientY;
+                currentDx = 0;
+                currentDy = 0;
+                startTime = Date.now();
+                isPointerDown = true;
+                isDraggingHorizontally = false;
+                isScrollingVertically = false;
+                dragLayer.classList.remove('drag-spring-return', 'drag-fly-out');
+            }
+
+            function onPointerMove(clientX, clientY, rawEvent) {
+                if (!isPointerDown || isCardAnimating || isScrollingVertically) return;
+
+                const dx = clientX - startX;
+                const dy = clientY - startY;
+
+                // Определяем намерение пользователя: вертикальный скролл страницы или горизонтальный свайп карточки
+                if (!isDraggingHorizontally) {
+                    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 10) {
+                        isScrollingVertically = true;
+                        return;
+                    }
+                    if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+                        isDraggingHorizontally = true;
+                    } else {
+                        return;
+                    }
+                }
+
+                // Блокируем вертикальное дёргание экрана во время горизонтального свайпа карточки
+                if (rawEvent && rawEvent.cancelable) {
+                    rawEvent.preventDefault();
+                }
+
+                currentDx = dx;
+                currentDy = dy;
+
+                const rotateDeg = dx * 0.055;
+                dragLayer.style.transform = `translate3d(${dx}px, ${dy * 0.22}px, 0px) rotate(${rotateDeg}deg)`;
+
+                const progress = Math.min(Math.abs(dx) / SWIPE_THRESHOLD, 1);
+
+                // Анимируем подъём нижней карточки в стопке
+                if (stackBg) {
+                    const scaleVal = 0.95 + (0.05 * progress);
+                    const translateYVal = 8 * (1 - progress);
+                    stackBg.style.transform = `scale(${scaleVal}) translateY(${translateYVal}px)`;
+                    stackBg.style.opacity = String(0.7 + 0.3 * progress);
+                }
+
+                // Показываем штамп «ЗНАЮ!» (вправо) или «ПОВТОРИТЬ» (влево)
+                if (dx > 0) {
+                    badgeKnow.style.opacity = String(progress);
+                    badgeKnow.style.transform = `rotate(-12deg) scale(${0.85 + 0.2 * progress})`;
+                    badgeReview.style.opacity = '0';
+                    frontFace.classList.remove('border-slate-200', 'border-amber-400');
+                    frontFace.classList.add('border-emerald-400');
+                } else if (dx < 0) {
+                    badgeReview.style.opacity = String(progress);
+                    badgeReview.style.transform = `rotate(12deg) scale(${0.85 + 0.2 * progress})`;
+                    badgeKnow.style.opacity = '0';
+                    frontFace.classList.remove('border-slate-200', 'border-emerald-400');
+                    frontFace.classList.add('border-amber-400');
+                }
+            }
+
+            function onPointerEnd() {
+                if (!isPointerDown) return;
+                isPointerDown = false;
+
+                if (!isDraggingHorizontally) return;
+
+                suppressNextClick = true;
+                setTimeout(() => { suppressNextClick = false; }, 60);
+
+                const elapsed = Math.max(Date.now() - startTime, 1);
+                const velocity = Math.abs(currentDx) / elapsed; // px/ms
+                const isFastFlick = velocity > 0.55 && Math.abs(currentDx) > 35;
+
+                if (Math.abs(currentDx) >= SWIPE_THRESHOLD || isFastFlick) {
+                    const decision = currentDx > 0 ? 'known' : 'review';
+                    animateSwipeDecision(decision);
+                } else {
+                    // Плавный пружинный возврат карточки в центр, если не дотянули до порога
+                    dragLayer.classList.add('drag-spring-return');
+                    dragLayer.style.transform = 'translate3d(0px, 0px, 0px) rotate(0deg)';
+                    badgeKnow.style.opacity = '0';
+                    badgeReview.style.opacity = '0';
+                    frontFace.classList.remove('border-emerald-400', 'border-amber-400');
+                    frontFace.classList.add('border-slate-200');
+                    if (stackBg) {
+                        stackBg.style.transform = 'scale(0.95) translateY(8px)';
+                        stackBg.style.opacity = '0.7';
+                    }
+                }
+
+                isDraggingHorizontally = false;
+            }
+
+            // Touch-события для смартфонов
+            fcContainer.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1) {
+                    onPointerStart(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: true });
+
+            fcContainer.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 1) {
+                    onPointerMove(e.touches[0].clientX, e.touches[0].clientY, e);
+                }
+            }, { passive: false });
+
+            fcContainer.addEventListener('touchend', onPointerEnd, { passive: true });
+            fcContainer.addEventListener('touchcancel', onPointerEnd, { passive: true });
+
+            // Mouse-события для тестирования перетаскивания мышью на ПК
+            fcContainer.addEventListener('mousedown', (e) => {
+                if (e.button !== 0) return;
+                onPointerStart(e.clientX, e.clientY);
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (isPointerDown) {
+                    onPointerMove(e.clientX, e.clientY, e);
+                }
+            });
+            window.addEventListener('mouseup', () => {
+                if (isPointerDown) {
+                    onPointerEnd();
+                }
+            });
+
+            // Клик / Тап переворачивает карточку, только если это не было перетаскивание
+            fcContainer.addEventListener('click', (e) => {
+                if (suppressNextClick) {
+                    e.stopPropagation();
+                    return;
+                }
+                flipCard();
+            });
+
             document.getElementById('btn-fc-prev').addEventListener('click', () => {
+                if (isCardAnimating) return;
                 fcIndex--;
                 renderFlashcard();
             });
             document.getElementById('btn-fc-next').addEventListener('click', () => {
+                if (isCardAnimating) return;
                 fcIndex++;
                 renderFlashcard();
             });
-            document.getElementById('btn-fc-review').addEventListener('click', () => markCurrentFlashcard('review'));
-            document.getElementById('btn-fc-known').addEventListener('click', () => markCurrentFlashcard('known'));
+            document.getElementById('btn-fc-review').addEventListener('click', () => animateSwipeDecision('review'));
+            document.getElementById('btn-fc-known').addEventListener('click', () => animateSwipeDecision('known'));
+            document.getElementById('btn-fc-undo').addEventListener('click', undoLastFlashcardAction);
             document.getElementById('btn-fc-shuffle').addEventListener('click', () => {
                 filteredQuestions.sort(() => Math.random() - 0.5);
                 fcIndex = 0;
@@ -1994,6 +2497,7 @@
                     renderFlashcard();
                 }
                 e.target.value = '';
+                e.target.blur();
             });
 
             // Управление тестовым тренажёром
@@ -2004,6 +2508,9 @@
             document.getElementById('btn-quiz-next').addEventListener('click', () => {
                 quizIndex++;
                 renderQuizQuestion();
+                if (window.innerWidth < 640) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
             });
             document.getElementById('btn-quiz-shuffle').addEventListener('click', () => {
                 filteredQuestions.sort(() => Math.random() - 0.5);
@@ -2013,7 +2520,7 @@
             document.getElementById('btn-quiz-reset-score').addEventListener('click', () => {
                 quizCorrectCount = 0;
                 quizTotalAnswered = 0;
-                document.getElementById('quiz-score').textContent = `Верно: 0 / 0 (0%)`;
+                saveProgress();
                 renderQuizQuestion();
             });
 
@@ -2027,12 +2534,18 @@
                 if (examCurrentIdx > 0) {
                     examCurrentIdx--;
                     renderExamState();
+                    if (window.innerWidth < 640) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                 }
             });
             document.getElementById('btn-exam-next').addEventListener('click', () => {
                 if (examCurrentIdx < examQuestions.length - 1) {
                     examCurrentIdx++;
                     renderExamState();
+                    if (window.innerWidth < 640) {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
                 } else {
                     finishExam();
                 }
@@ -2046,6 +2559,24 @@
                 e.target.textContent = examIsPaused ? 'Продолжить' : 'Пауза';
             });
             document.getElementById('btn-exam-finish').addEventListener('click', () => finishExam());
+
+            // Мобильное окно сетки вопросов 1–80 в экзамене
+            const examGridWrapper = document.getElementById('exam-grid-wrapper');
+            document.getElementById('btn-exam-mobile-grid').addEventListener('click', () => {
+                examGridWrapper.classList.remove('hidden');
+                examGridWrapper.classList.add('flex');
+            });
+            document.getElementById('btn-close-exam-grid').addEventListener('click', () => {
+                examGridWrapper.classList.add('hidden');
+                examGridWrapper.classList.remove('flex');
+            });
+            examGridWrapper.addEventListener('click', (e) => {
+                if (e.target === examGridWrapper) {
+                    examGridWrapper.classList.add('hidden');
+                    examGridWrapper.classList.remove('flex');
+                }
+            });
+
             document.getElementById('btn-exam-new').addEventListener('click', () => {
                 document.getElementById('exam-result-screen').classList.add('hidden');
                 document.getElementById('exam-result-screen').classList.remove('flex');
@@ -2090,12 +2621,14 @@
             document.getElementById('btn-cancel-reset').addEventListener('click', () => modal.classList.add('hidden'));
             document.getElementById('btn-confirm-reset').addEventListener('click', () => {
                 progressMap = {};
+                quizCorrectCount = 0;
+                quizTotalAnswered = 0;
                 saveProgress();
                 modal.classList.add('hidden');
                 renderActiveView();
             });
 
-            // Горячие клавиши клавиатуры
+            // Горячие клавиши клавиатуры (для ПК)
             document.addEventListener('keydown', (e) => {
                 if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'SELECT') return;
 
@@ -2122,9 +2655,11 @@
                         fcIndex--;
                         renderFlashcard();
                     } else if (e.key === '1') {
-                        markCurrentFlashcard('review');
+                        animateSwipeDecision('review');
                     } else if (e.key === '2') {
-                        markCurrentFlashcard('known');
+                        animateSwipeDecision('known');
+                    } else if (e.key === 'z' || e.key === 'я' || e.code === 'Backspace') {
+                        undoLastFlashcardAction();
                     }
                 } else if (currentMode === 'quiz') {
                     if (['1', '2', '3', '4', '5'].includes(e.key) && !quizAnswered) {
