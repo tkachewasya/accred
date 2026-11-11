@@ -86,18 +86,58 @@
 </head>
 <body class="min-h-[100dvh] text-slate-800 flex flex-col main-bottom-pad overflow-x-hidden">
 
+    <!-- Векторный логотип РосУниМед (чистая эмблема книги со змеёй ДНК и пламенем) -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="hidden" aria-hidden="true">
+        <symbol id="rosunimed-logo" viewBox="60 63 180 180">
+            <!-- Капля / пламя над книгой -->
+            <path d="M 150,68 C 156,76 161,83 159,90 C 158,95 154,97 150,97 C 146,97 142,95 141,90 C 139,83 144,76 150,68 Z" fill="#1366BA" />
+            <path d="M 148.5,87 C 151,89.5 151.5,93.5 150,97 C 147,95.5 146.5,90.5 148.5,87 Z" fill="#FFFFFF" />
+
+            <!-- Внутренний синий блок раскрытой книги -->
+            <path d="M 96,97 L 150,104 L 204,97 A 9,9 0 0,1 214,106 L 214,195 A 9,9 0 0,1 207,204 L 150,217 L 93,204 A 9,9 0 0,1 86,195 L 86,106 A 9,9 0 0,1 96,97 Z" fill="#1366BA" />
+
+            <!-- Внешний U-образный контур обложки книги -->
+            <path d="M 73,108 L 73,203 C 73,209 76,213 82,215 L 150,232 L 218,215 C 224,213 227,209 227,203 L 227,108" fill="none" stroke="#1366BA" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Белая спираль ДНК и медицинская змея внутри книги -->
+            <!-- Поперечные перекладины ДНК (верхний и нижний виток) -->
+            <g stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round">
+                <line x1="138" y1="133" x2="162" y2="133" />
+                <line x1="135" y1="141" x2="165" y2="141" />
+                <line x1="138" y1="149" x2="162" y2="149" />
+                <line x1="139" y1="172" x2="161" y2="172" />
+                <line x1="136" y1="180" x2="164" y2="180" />
+                <line x1="139" y1="188" x2="161" y2="188" />
+            </g>
+
+            <!-- Основное тело змеи (левая верхняя дуга -> перекрест -> правая нижняя дуга -> острие внизу) -->
+            <path d="M 143,115 C 154,115 156,123 145,127 C 131,132 130,149 144,157 L 156,164 C 169,172 169,190 150,203 C 131,190 131,172 144,164 L 156,157 C 170,149 170,133 160,126" fill="none" stroke="#FFFFFF" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round" />
+
+            <!-- Голова змеи, смотрящая влево, с синим глазом -->
+            <path d="M 148,111 C 141,110 135,114 135,118 C 135,122 141,124 148,123 C 153,122 155,114 148,111 Z" fill="#FFFFFF" />
+            <circle cx="141.5" cy="116.5" r="2" fill="#1366BA" />
+        </symbol>
+    </svg>
+
     <!-- Компактная липкая шапка (< 56px на мобильных экранах) -->
-    <header class="bg-gradient-to-r from-indigo-950 via-indigo-900 to-teal-900 text-white shadow-md sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 sm:py-3">
+    <header class="bg-gradient-to-r from-slate-950 via-[#0e3a75] to-[#1366ba] text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-3 py-2 sm:px-6 sm:py-2.5">
             <div class="flex items-center justify-between gap-2">
-                <!-- Логотип и заголовок -->
+                <!-- Логотип РосУниМед (клик возвращает к текущей карточке) и заголовок с плашкой -->
                 <div class="flex items-center gap-2.5 min-w-0">
-                    <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center text-base sm:text-xl font-bold shrink-0 border border-white/20">
-                        ✚
-                    </div>
+                    <button id="btn-header-logo" type="button" title="Вернуться к изучению карточек (на текущую карточку)" class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-1.5 flex items-center justify-center shrink-0 shadow-md border border-white/80 hover:scale-105 active:scale-95 transition cursor-pointer group">
+                        <svg class="w-full h-full">
+                            <use href="#rosunimed-logo"></use>
+                        </svg>
+                    </button>
                     <div class="min-w-0">
-                        <h1 class="text-sm sm:text-lg font-extrabold tracking-tight truncate">Аккредитация СПО: Сестринское дело</h1>
-                        <p class="hidden sm:block text-xs text-indigo-200 truncate">Единая база: 414 вопросов (7 блоков) • Квизлет • Тест • Экзамен 80/60</p>
+                        <div class="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                            <h1 class="text-sm sm:text-lg font-extrabold tracking-tight truncate">Аккредитация СПО: Сестринское дело</h1>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md bg-white/15 backdrop-blur-sm border border-white/25 text-[10px] sm:text-xs font-bold tracking-wide text-sky-100 shrink-0 shadow-inner">
+                                РосУниМед
+                            </span>
+                        </div>
+                        <p class="hidden sm:block text-xs text-sky-100/90 truncate">Единая база: 414 вопросов (7 блоков) • Квизлет • Тест • Экзамен 80/60</p>
                     </div>
                 </div>
 
@@ -245,14 +285,21 @@
             <!-- Стартовый экран настройки экзамена -->
             <div id="exam-start-screen" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-8 flex flex-col gap-5">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-                    <div>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-100 text-indigo-800 font-bold text-xs mb-2">
-                            🏛️ Стандарт первичной аккредитации СПО РФ
-                        </span>
-                        <h2 class="text-lg sm:text-2xl font-extrabold text-slate-900">Итоговое тестирование: 80 вопросов на 60 минут</h2>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-1">
-                            Случайная выборка 80 тестовых заданий из единой проверенной базы (414 вопросов) с оригинальными вариантами ответов.
-                        </p>
+                    <div class="flex items-start sm:items-center gap-3.5">
+                        <div class="hidden sm:flex w-16 h-16 rounded-2xl bg-slate-50 border border-slate-200 p-1.5 items-center justify-center shrink-0 shadow-sm">
+                            <svg class="w-full h-full">
+                                <use href="#rosunimed-logo"></use>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-100 text-[#1366ba] font-bold text-xs mb-2">
+                                🏛️ Стандарт первичной аккредитации СПО РФ
+                            </span>
+                            <h2 class="text-lg sm:text-2xl font-extrabold text-slate-900">Итоговое тестирование: 80 вопросов на 60 минут</h2>
+                            <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                                Случайная выборка 80 тестовых заданий из единой проверенной базы (414 вопросов) с оригинальными вариантами ответов.
+                            </p>
+                        </div>
                     </div>
                     <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 sm:p-4 flex items-center justify-around sm:justify-center gap-3 sm:gap-4 shrink-0">
                         <div class="text-center px-1 sm:px-2">
@@ -2626,6 +2673,13 @@
                 saveProgress();
                 modal.classList.add('hidden');
                 renderActiveView();
+            });
+
+            // Клик по логотипу в шапке мгновенно возвращает пользователя в режим «Карточки» на ту карточку, где он остановился
+            document.getElementById('btn-header-logo')?.addEventListener('click', () => {
+                currentMode = 'flashcards';
+                renderActiveView();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
             // Горячие клавиши клавиатуры (для ПК)
